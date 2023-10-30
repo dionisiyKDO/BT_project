@@ -1,15 +1,11 @@
 from data_analyze import *
-import os, random, cv2, time, keras
+import os, random, cv2, time, keras, datetime
 
 import numpy as np
 import pandas as pd
 import tensorflow as tf
-import tensorflow_hub as hub
 import plotly.express as px
 import matplotlib.pyplot as plt
-
-from plotly.offline import iplot, init_notebook_mode
-
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import confusion_matrix, classification_report
 
@@ -21,10 +17,94 @@ from keras import regularizers
 from keras.models import Sequential
 from keras.layers import Conv2D, MaxPooling2D, Flatten, Dense, Activation, Dropout, BatchNormalization
 
-from keras.applications import VGG19
 
-# physical_device = tf.config.list_physical_devices('GPU')
-# tf.config.experimental.set_memory_growth(physical_device[0], True)
+physical_device = tf.config.list_physical_devices('GPU')
+tf.config.experimental.set_memory_growth(physical_device[0], True)
+
+# os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3' 
+
+# config = tf.compat.v1.ConfigProto()
+# config.gpu_options.allow_growth = True
+# sess = tf.compat.v1.Session(config=config)
+
+# TODO
+# refference
+# https://www.kaggle.com/code/matthewjansen/transfer-learning-brain-tumor-classification
+# Build augmentation layer
+# augmentation_layer = Sequential([
+#     layers.RandomFlip(mode='horizontal_and_vertical', seed=CFG.TF_SEED),
+#     layers.RandomZoom(height_factor=(-0.1, 0.1), width_factor=(-0.1, 0.1), seed=CFG.TF_SEED),
+# ], name='augmentation_layer')
+
+
+
+
+def get_model(network_name, shape, num_classes):
+    if network_name == 'CNN':
+        model = Sequential([
+            Conv2D(filters=16, kernel_size=3, activation='relu', padding='same', input_shape=shape),
+            MaxPooling2D(pool_size=2),
+            Conv2D(filters=32, kernel_size=3, activation='relu'),
+            MaxPooling2D(pool_size=2),
+            Flatten(),
+            Dense(64, activation='relu'),
+            Dense(num_classes, activation='softmax')
+        ])
+    elif network_name == 'VGG16':
+        model = Sequential([
+            Conv2D(filters=64, kernel_size=3, activation='relu', padding='same', input_shape=shape),
+            Conv2D(filters=64, kernel_size=3, activation='relu', padding='same'),
+            MaxPooling2D(pool_size=2, padding='same'),
+            Conv2D(filters=128, kernel_size=3, activation='relu', padding='same'),
+            Conv2D(filters=128, kernel_size=3, activation='relu', padding='same'),
+            MaxPooling2D(pool_size=2, padding='same'),
+            Conv2D(filters=256, kernel_size=3, activation='relu', padding='same'),
+            Conv2D(filters=256, kernel_size=3, activation='relu', padding='same'),
+            Conv2D(filters=256, kernel_size=3, activation='relu', padding='same'),
+            MaxPooling2D(pool_size=2, padding='same'),
+            Conv2D(filters=512, kernel_size=3, activation='relu', padding='same'),
+            Conv2D(filters=512, kernel_size=3, activation='relu', padding='same'),
+            Conv2D(filters=512, kernel_size=3, activation='relu', padding='same'),
+            MaxPooling2D(pool_size=2, padding='same'),
+            Conv2D(filters=512, kernel_size=3, activation='relu', padding='same'),
+            Conv2D(filters=512, kernel_size=3, activation='relu', padding='same'),
+            Conv2D(filters=512, kernel_size=3, activation='relu', padding='same'),
+            MaxPooling2D(pool_size=2, padding='same'),
+            Flatten(),
+            Dense(4096, activation='relu'),
+            Dense(4096, activation='relu'),
+            Dense(num_classes, activation='sigmoid')
+        ])
+    elif network_name == 'VGG19':
+        model = tf.keras.Sequential([
+            Conv2D(filters=64, kernel_size=3, activation='relu', padding='same', input_shape=shape),
+            Conv2D(filters=64, kernel_size=3, activation='relu', padding='same'),
+            MaxPooling2D(pool_size=2, padding='same'),
+            Conv2D(filters=128, kernel_size=3, activation='relu', padding='same'),
+            Conv2D(filters=128, kernel_size=3, activation='relu', padding='same'),
+            MaxPooling2D(pool_size=2, padding='same'),
+            Conv2D(filters=256, kernel_size=3, activation='relu', padding='same'),
+            Conv2D(filters=256, kernel_size=3, activation='relu', padding='same'),
+            MaxPooling2D(pool_size=2, padding='same'),
+            Conv2D(filters=512, kernel_size=3, activation='relu', padding='same'),
+            Conv2D(filters=512, kernel_size=3, activation='relu', padding='same'),
+            Conv2D(filters=512, kernel_size=3, activation='relu', padding='same'),
+            Conv2D(filters=512, kernel_size=3, activation='relu', padding='same'),
+            MaxPooling2D(pool_size=2, padding='same'),
+            Conv2D(filters=512, kernel_size=3, activation='relu', padding='same'),
+            Conv2D(filters=512, kernel_size=3, activation='relu', padding='same'),
+            Conv2D(filters=512, kernel_size=3, activation='relu', padding='same'),
+            Conv2D(filters=512, kernel_size=3, activation='relu', padding='same'),
+            MaxPooling2D(pool_size=2, padding='same'),
+            Flatten(),
+            Dense(4096, activation='relu'),
+            Dense(4096, activation='relu'),
+            Dense(num_classes, activation='sigmoid')
+        ])
+    else:
+        model = None
+    return model
+
 
 
 
@@ -70,10 +150,12 @@ def plot_training(hist):
     plt.show()
 
 
-def NN(df: pd.DataFrame):
+def NN(df: pd.DataFrame, network_name='CNN', epochs=20, batch_size=16, earlystop=True, 
+       model_summary=False, logging=False, save=False, graphs=False):
     start_time = time.time()
     results = []
 
+    # Разделение выборки на тестовую и тренировочную 
     train_df, test_df = train_test_split(df, test_size=0.33, shuffle=True, random_state=123, stratify=df['class'])
     test_df, val_df = train_test_split(test_df, test_size=0.5, shuffle=True, random_state=123, stratify=test_df['class'])
     # Колво ключевых признаков, тест stratify
@@ -94,6 +176,12 @@ def NN(df: pd.DataFrame):
     # 0          ./archive/Astrocitoma T1/005_big_gallery.jpeg  Astrocitoma T1
     # 1          ./archive/Astrocitoma T1/006_big_gallery.jpeg  Astrocitoma T1
     
+
+    # Инициализация доп. параметров
+    num_classes = df['class'].unique().size
+    channels = 3
+    img_size = (224, 224)
+    img_shape = (img_size[0], img_size[1], channels)
     df_labels = {
         'Astrocitoma T1': 0,
         'Astrocitoma T1C+': 1 ,
@@ -141,16 +229,14 @@ def NN(df: pd.DataFrame):
         '_NORMAL T2': 44,
     }
 
-
-    channels = 3
-    img_size = (224, 224)
-    img_shape = (img_size[0], img_size[1], channels)
-
+    # Transform data 
+    # region
     def get_xy(df):
-        X, y = [], [] # X = images, y = labels
+        '''Get from df images, put in X, y'''
+        X, y = [], []
         for ind in df.index:
             img = cv2.imread(str(df['image_path'][ind]))
-            resized_img = cv2.resize(img, img_size) # Resizing the images to be able to pass on MobileNetv2 model
+            resized_img = cv2.resize(img, img_size)
             X.append(resized_img) 
             y.append(df_labels[df['class'][ind]])
 
@@ -166,210 +252,60 @@ def NN(df: pd.DataFrame):
     y_train = pd.get_dummies(y_train)
     y_test = pd.get_dummies(y_test)
     y_val = pd.get_dummies(y_val)
-
-
-    model = tf.keras.Sequential([
-        tf.keras.layers.Conv2D(filters=64, kernel_size=3, activation='relu', padding='same', input_shape=img_shape),
-        tf.keras.layers.Conv2D(filters=64, kernel_size=3, activation='relu', padding='same'),
-        tf.keras.layers.MaxPooling2D(pool_size=2, padding='same'),
-        tf.keras.layers.Conv2D(filters=128, kernel_size=3, activation='relu', padding='same'),
-        tf.keras.layers.Conv2D(filters=128, kernel_size=3, activation='relu', padding='same'),
-        tf.keras.layers.MaxPooling2D(pool_size=2, padding='same'),
-        tf.keras.layers.Conv2D(filters=256, kernel_size=3, activation='relu', padding='same'),
-        tf.keras.layers.Conv2D(filters=256, kernel_size=3, activation='relu', padding='same'),
-        tf.keras.layers.Conv2D(filters=256, kernel_size=3, activation='relu', padding='same'),
-        tf.keras.layers.MaxPooling2D(pool_size=2, padding='same'),
-        tf.keras.layers.Conv2D(filters=512, kernel_size=3, activation='relu', padding='same'),
-        tf.keras.layers.Conv2D(filters=512, kernel_size=3, activation='relu', padding='same'),
-        tf.keras.layers.Conv2D(filters=512, kernel_size=3, activation='relu', padding='same'),
-        tf.keras.layers.MaxPooling2D(pool_size=2, padding='same'),
-        tf.keras.layers.Conv2D(filters=512, kernel_size=3, activation='relu', padding='same'),
-        tf.keras.layers.Conv2D(filters=512, kernel_size=3, activation='relu', padding='same'),
-        tf.keras.layers.Conv2D(filters=512, kernel_size=3, activation='relu', padding='same'),
-        tf.keras.layers.MaxPooling2D(pool_size=2, padding='same'),
-        tf.keras.layers.Flatten(),
-        tf.keras.layers.Dense(4096, activation='relu'),
-        tf.keras.layers.Dense(4096, activation='relu'),
-        tf.keras.layers.Dense(44, activation='sigmoid')
-    ])
-
-    model.summary()
-
-    model.compile( optimizer="adam",
-                    loss=tf.keras.losses.CategoricalCrossentropy(),
-                    metrics=['acc']) 
-
-    history = model.fit(X_train, y_train, epochs=10, validation_data=(X_val, y_val), batch_size=64)
-    model.evaluate(X_test,y_test)
-
-
-    y_pred = model.predict(X_test, batch_size=64, verbose=1)
-
-
-
-    acc = pd.DataFrame({'train': history.history['acc'], 'val': history.history['val_acc']})
-
-    fig = px.line(acc, x=acc.index, y=acc.columns[0::], title='Training and Evaluation Accuracy every Epoch', markers=True)
-    fig.show()
-
-    loss = pd.DataFrame({'train': history.history['loss'], 'val': history.history['val_loss']})
-
-    fig = px.line(loss, x=loss.index, y=loss.columns[0::], title='Training and Evaluation Loss every Epoch', markers=True)
-    fig.show()
-
-
-
-    model.save('VGG16.keras')
-    # model = tf.keras.models.load_model('my_model.keras')
-
-
-
-
-
-
-
-
-    # BT region
-    # region
-    # color = 'rgb'
-    # channels = 3
-
-    # img_size = (224, 224)
-    # img_shape = (img_size[0], img_size[1], channels)
-    
-    # batch_size = 32
-    # ts_length = len(test_df)
-    # test_batch_size = max([ts_length // n for n in range(1, ts_length + 1) if ts_length%n == 0 and ts_length/n <= 80])
-    # test_steps = ts_length // test_batch_size
-    # def scalar(img): return img
-    
-
-    # tr_gen = ImageDataGenerator(preprocessing_function= scalar, 
-    #                             horizontal_flip= True)
-
-    # ts_gen = ImageDataGenerator(preprocessing_function= scalar)
-
-    # train_gen = tr_gen.flow_from_dataframe( train_df, 
-    #                                     x_col= 'image_path', 
-    #                                     y_col= 'class', 
-    #                                     target_size= img_size, 
-    #                                     class_mode= 'categorical',
-    #                                     color_mode= color, 
-    #                                     shuffle= True, 
-    #                                     batch_size= batch_size)
-
-    # valid_gen = ts_gen.flow_from_dataframe( valid_df, 
-    #                                     x_col= 'image_path', 
-    #                                     y_col= 'class', 
-    #                                     target_size= img_size, 
-    #                                     class_mode= 'categorical',
-    #                                     color_mode= color, 
-    #                                     shuffle= True, 
-    #                                     batch_size= batch_size)
-
-    # test_gen = ts_gen.flow_from_dataframe( test_df, 
-    #                                     x_col= 'image_path', 
-    #                                     y_col= 'class', 
-    #                                     target_size= img_size, 
-    #                                     class_mode= 'categorical',
-    #                                     color_mode= color, 
-    #                                     shuffle= False, 
-    #                                     batch_size= test_batch_size)
-
-
-    # base_model = tf.keras.applications.efficientnet.EfficientNetB5(include_top= False, 
-    #                                                            weights= "imagenet", 
-    #                                                            input_shape= img_shape,
-    #                                                            pooling= 'max')
-
-    # model = Sequential([
-    #     base_model,
-    #     BatchNormalization(axis= -1, momentum= 0.99, epsilon= 0.001),
-    #     Dense(256, 
-    #         kernel_regularizer= regularizers.l2(l= 0.016), 
-    #         activity_regularizer= regularizers.l1(0.006),
-    #         bias_regularizer= regularizers.l1(0.006), 
-    #         activation= 'relu'),
-        
-    #     Dropout(rate= 0.45, 
-    #             seed= 123),
-        
-    #     Dense(44, activation= 'softmax')
-    # ])
-
-    # model.compile(Adamax(learning_rate= 0.001), loss= 'categorical_crossentropy', metrics= ['accuracy'])
-
-    # model.summary()
-
-    # early_stop = EarlyStopping(monitor='val_loss', 
-    #                        patience=5,
-    #                        verbose=1)
-
-    # checkpoint = ModelCheckpoint('model_weights.h5', 
-    #                             monitor='val_loss', 
-    #                             save_best_only=True, 
-    #                             save_weights_only=True, 
-    #                             mode='min', 
-    #                             verbose=1)
-
-
-    # history = model.fit(x= train_gen,
-    #                     steps_per_epoch = 20,
-    #                     epochs= 20, 
-    #                     callbacks=[early_stop, checkpoint],
-    #                     validation_data= valid_gen)
-
-    # plot_training(history)
-
-    # ts_length = len(test_df)
-    # test_batch_size = max(sorted([ts_length // n for n in range(1, ts_length + 1) if ts_length%n == 0 and ts_length/n <= 80]))
-    # test_steps = ts_length // test_batch_size
-
-    # train_score = model.evaluate(train_gen, steps= test_steps, verbose= 1)
-    # valid_score = model.evaluate(valid_gen, steps= test_steps, verbose= 1)
-    # test_score = model.evaluate(test_gen, steps= test_steps, verbose= 1)
-
-    # print("Train Loss: ", train_score[0])
-    # print("Train Accuracy: ", train_score[1])
-    # print('-' * 20)
-    # print("Validation Loss: ", valid_score[0])
-    # print("Validation Accuracy: ", valid_score[1])
-    # print('-' * 20)
-    # print("Test Loss: ", test_score[0])
-    # print("Test Accuracy: ", test_score[1])
-
-
-    # y_pred = model.predict(test_gen)
-
-    # y_pred_labels = np.argmax(y_pred, axis=1)
-
-    # y_true_labels = test_gen.classes
-    # class_names = list(test_gen.class_indices.keys())
-
-    # confusion_mtx = confusion_matrix(y_true_labels, y_pred_labels)
-
-    # plt.figure(figsize=(10,8))
-    # sns.heatmap(confusion_mtx, cmap="Blues", annot=True, fmt="d", xticklabels=class_names, yticklabels=class_names)
-    # plt.title("Confusion Matrix")
-    # plt.xlabel("Predicted Label")
-    # plt.ylabel("True Label")
-    # plt.show()
-
-
-
-    # report = classification_report(y_true_labels, y_pred_labels, target_names=class_names)
-
-    # print("Classification Report: ")
-    # print(report)
-
-    # return results
     # endregion
+
+    # Инициализация сети
+    model = get_model(network_name, img_shape, num_classes)
+
+    # Проверка на то, создалась ли сеть
+    if model == None:
+        print('=== Неправильное имя сети ===')
+        return
+
+    # "Cводка" по сети
+    if model_summary:
+        model.summary()
+    
+    # Компиляция сети
+    model.compile(optimizer="sgd",
+                  loss=tf.keras.losses.CategoricalCrossentropy(),
+                  metrics=['acc']) 
+
+    # Обучение сети
+    # Колбэк на предотвращение обучения если потери функции перестали улучшаться 2 шага
+    if earlystop:
+        early_stop = EarlyStopping(monitor='loss',patience=2)
+        history = model.fit(X_train, y_train, epochs=epochs, batch_size=batch_size, verbose=logging, validation_data=(X_val, y_val), callbacks=[early_stop])
+    else:
+        history = model.fit(X_train, y_train, epochs=epochs, batch_size=batch_size, verbose=logging, validation_data=(X_val, y_val))
+       
+    
+    # Сохранить модель если надо
+    if save:
+        model.save(f'{network_name}.keras')
+
+    # Оценивание сети на тестовом наборе
+    loss, accuracy = model.evaluate(X_test, y_test)
+
+    # y_pred = model.predict(X_test, batch_size=16, verbose=1)
+
+    if graphs:
+        h1 = history.history
+        acc_epochs = pd.DataFrame({'train': h1['acc'], 'val': h1['val_acc']})
+        loss_epochs = pd.DataFrame({'train': h1['loss'], 'val': h1['val_loss']})
+
+        fig = px.line(acc_epochs, x=acc_epochs.index, y=acc_epochs.columns[0::], title='Training and Evaluation Accuracy every Epoch', markers=True)
+        fig.show()
+        fig = px.line(loss_epochs, x=loss_epochs.index, y=loss_epochs.columns[0::], title='Training and Evaluation Loss every Epoch', markers=True)
+        fig.show()
+
+    # Подсчёт потраченного времени и возврат результатов 
+    end_time = time.time()
+    training_time = end_time - start_time
+    return model, [loss, accuracy, training_time]
 
 
 if __name__ == '__main__':
     path = './archive'
     df = get_df(path = path)
     NN(df)
-
-    # model = keras.Model.load_weights('./model_weights.h5')
-    # plot_training(model.history)

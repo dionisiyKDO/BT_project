@@ -12,7 +12,7 @@ def count_labels_plot(x: pd.Series, title: str, xlabel: str, ylabel: str):
 
 
 def get_df(path: str) -> pd.DataFrame:
-    """Получить Датафрейм с путями к картинкам и соответсвующим классами"""
+    """Получить Датафрейм c путями к картинкам и соответсвующим классами"""
     if not os.path.exists(path):
          print("=== Неправильный путь к Датасету ===")
          exit()
