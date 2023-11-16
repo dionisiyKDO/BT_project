@@ -6,6 +6,7 @@ import pandas as pd
 import tensorflow as tf
 import plotly.express as px
 import matplotlib.pyplot as plt
+
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import confusion_matrix, classification_report
 
@@ -17,15 +18,15 @@ from keras import regularizers
 from keras.models import Sequential
 from keras.layers import Conv2D, MaxPooling2D, Flatten, Dense, Activation, Dropout, BatchNormalization
 
-
 physical_device = tf.config.list_physical_devices('GPU')
 tf.config.experimental.set_memory_growth(physical_device[0], True)
 
+# Disable all logging output from Tensorflow 
 # os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3' 
-
-# config = tf.compat.v1.ConfigProto()
-# config.gpu_options.allow_growth = True
-# sess = tf.compat.v1.Session(config=config)
+    # 0 = all messages are logged (default behavior)
+    # 1 = INFO messages are not printed
+    # 2 = INFO and WARNING messages are not printed
+    # 3 = INFO, WARNING, and ERROR messages are not printed
 
 # TODO
 # refference
@@ -35,8 +36,6 @@ tf.config.experimental.set_memory_growth(physical_device[0], True)
 #     layers.RandomFlip(mode='horizontal_and_vertical', seed=CFG.TF_SEED),
 #     layers.RandomZoom(height_factor=(-0.1, 0.1), width_factor=(-0.1, 0.1), seed=CFG.TF_SEED),
 # ], name='augmentation_layer')
-
-
 
 
 def get_model(network_name, shape, num_classes):
@@ -106,70 +105,12 @@ def get_model(network_name, shape, num_classes):
     return model
 
 
-
-
-def plot_training(hist):
-    '''
-    This function take training model and plot history of accuracy and losses with the best epoch in both of them.
-    '''
-
-    tr_acc = hist.history['accuracy']
-    tr_loss = hist.history['loss']
-    val_acc = hist.history['val_accuracy']
-    val_loss = hist.history['val_loss']
-    index_loss = np.argmin(val_loss)
-    val_lowest = val_loss[index_loss]
-    index_acc = np.argmax(val_acc)
-    acc_highest = val_acc[index_acc]
-    Epochs = [i+1 for i in range(len(tr_acc))]
-    loss_label = f'best epoch= {str(index_loss + 1)}'
-    acc_label = f'best epoch= {str(index_acc + 1)}'
-
-    plt.figure(figsize= (20, 8))
-    plt.style.use('fivethirtyeight')
-
-    plt.subplot(1, 2, 1)
-    plt.plot(Epochs, tr_loss, 'r', label= 'Training loss')
-    plt.plot(Epochs, val_loss, 'g', label= 'Validation loss')
-    plt.scatter(index_loss + 1, val_lowest, s= 150, c= 'blue', label= loss_label)
-    plt.title('Training and Validation Loss')
-    plt.xlabel('Epochs')
-    plt.ylabel('Loss')
-    plt.legend()
-
-    plt.subplot(1, 2, 2)
-    plt.plot(Epochs, tr_acc, 'r', label= 'Training Accuracy')
-    plt.plot(Epochs, val_acc, 'g', label= 'Validation Accuracy')
-    plt.scatter(index_acc + 1 , acc_highest, s= 150, c= 'blue', label= acc_label)
-    plt.title('Training and Validation Accuracy')
-    plt.xlabel('Epochs')
-    plt.ylabel('Accuracy')
-    plt.legend()
-
-    plt.tight_layout
-    plt.show()
-
-
 def NN(df: pd.DataFrame, network_name='CNN', epochs=20, batch_size=16, earlystop=True, 
        model_summary=False, logging=False, save=False, graphs=False):
     start_time = time.time()
-    results = []
 
-    # Разделение выборки на тестовую и тренировочную 
     train_df, test_df = train_test_split(df, test_size=0.33, shuffle=True, random_state=123, stratify=df['class'])
     test_df, val_df = train_test_split(test_df, test_size=0.5, shuffle=True, random_state=123, stratify=test_df['class'])
-    # Колво ключевых признаков, тест stratify
-    # region
-    # print(valid_df.head())
-    # print(train_df.head())
-    # print(test_df.head())
-    # print(valid_df['class'].value_counts())
-    # print(train_df['class'].value_counts())
-    # print(test_df['class'].value_counts())
-    # count_labels_plot(valid_df['class'].value_counts(), "Valid_df Labels distribution", "Label", 'Frequency')
-    # count_labels_plot(train_df['class'].value_counts(), "Train_df Labels distribution", "Label", 'Frequency')
-    # count_labels_plot( test_df['class'].value_counts(), "Test_df Labels distribution",  "Label", 'Frequency')
-    # endregion
 
     #   df:
     #                                               image_path           class
@@ -177,7 +118,7 @@ def NN(df: pd.DataFrame, network_name='CNN', epochs=20, batch_size=16, earlystop
     # 1          ./archive/Astrocitoma T1/006_big_gallery.jpeg  Astrocitoma T1
     
 
-    # Инициализация доп. параметров
+    # Initialize parameters
     num_classes = df['class'].unique().size
     channels = 3
     img_size = (224, 224)
@@ -229,10 +170,10 @@ def NN(df: pd.DataFrame, network_name='CNN', epochs=20, batch_size=16, earlystop
         '_NORMAL T2': 44,
     }
 
-    # Transform data 
+    # Get images, put in X,y variables 
     # region
     def get_xy(df):
-        '''Get from df images, put in X, y'''
+        '''Get from df images, put in X,y'''
         X, y = [], []
         for ind in df.index:
             img = cv2.imread(str(df['image_path'][ind]))
@@ -254,25 +195,20 @@ def NN(df: pd.DataFrame, network_name='CNN', epochs=20, batch_size=16, earlystop
     y_val = pd.get_dummies(y_val)
     # endregion
 
-    # Инициализация сети
+    # Initialize model
     model = get_model(network_name, img_shape, num_classes)
-
-    # Проверка на то, создалась ли сеть
     if model == None:
-        print('=== Неправильное имя сети ===')
+        print('=== Incorrect network name ===')
         return
-
-    # "Cводка" по сети
     if model_summary:
         model.summary()
-    
-    # Компиляция сети
-    model.compile(optimizer="sgd",
-                  loss=tf.keras.losses.CategoricalCrossentropy(),
-                  metrics=['acc']) 
+    model.compile(optimizer="sgd", loss=tf.keras.losses.CategoricalCrossentropy(), metrics=['acc']) 
+    if save:
+        model.save(f'./models/{network_name}.keras')
 
-    # Обучение сети
-    # Колбэк на предотвращение обучения если потери функции перестали улучшаться 2 шага
+
+    # Network training
+    # Callback to prevent learning if loss of function stops improving 2 steps
     if earlystop:
         early_stop = EarlyStopping(monitor='loss',patience=2)
         history = model.fit(X_train, y_train, epochs=epochs, batch_size=batch_size, verbose=logging, validation_data=(X_val, y_val), callbacks=[early_stop])
@@ -280,14 +216,8 @@ def NN(df: pd.DataFrame, network_name='CNN', epochs=20, batch_size=16, earlystop
         history = model.fit(X_train, y_train, epochs=epochs, batch_size=batch_size, verbose=logging, validation_data=(X_val, y_val))
        
     
-    # Сохранить модель если надо
-    if save:
-        model.save(f'{network_name}.keras')
-
-    # Оценивание сети на тестовом наборе
+    # Network evaluation on a test set + summing up
     loss, accuracy = model.evaluate(X_test, y_test)
-
-    # y_pred = model.predict(X_test, batch_size=16, verbose=1)
 
     if graphs:
         h1 = history.history
@@ -299,13 +229,6 @@ def NN(df: pd.DataFrame, network_name='CNN', epochs=20, batch_size=16, earlystop
         fig = px.line(loss_epochs, x=loss_epochs.index, y=loss_epochs.columns[0::], title='Training and Evaluation Loss every Epoch', markers=True)
         fig.show()
 
-    # Подсчёт потраченного времени и возврат результатов 
     end_time = time.time()
     training_time = end_time - start_time
     return model, [loss, accuracy, training_time]
-
-
-if __name__ == '__main__':
-    path = './archive'
-    df = get_df(path = path)
-    NN(df)

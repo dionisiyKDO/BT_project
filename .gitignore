@@ -1,6 +1,7 @@
-/archive
+/data
 /.archive
 /__pycache__
+/models
 
 test.py
 
@@ -8,8 +9,3 @@ test.ipynb
 notebook_test.ipynb
 notebook copy.ipynb
 notebook_simpl_CNN.ipynb
-
-CNN.keras
-VGG16.keras
-VGG19.keras
-my_model.keras
