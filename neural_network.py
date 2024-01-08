@@ -1,3 +1,4 @@
+
 from data_analyze import *
 import os, random, cv2, time, keras, datetime
 
@@ -9,6 +10,7 @@ import matplotlib.pyplot as plt
 
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import confusion_matrix, classification_report
+from sklearn import experimental
 
 from keras.preprocessing.image import ImageDataGenerator
 from keras.callbacks import EarlyStopping, ModelCheckpoint
@@ -16,13 +18,14 @@ from keras.optimizers import Adam, Adamax
 from keras import regularizers
 
 from keras.models import Sequential
-from keras.layers import Conv2D, MaxPooling2D, Flatten, Dense, Activation, Dropout, BatchNormalization
+from keras.layers import Conv2D, MaxPooling2D, Flatten, Dense, Activation, Dropout
+from keras.layers import BatchNormalization, Lambda, Resizing, MaxPooling2D, GlobalAveragePooling2D
 
 physical_device = tf.config.list_physical_devices('GPU')
 tf.config.experimental.set_memory_growth(physical_device[0], True)
 
 # Disable all logging output from Tensorflow 
-# os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3' 
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3' 
     # 0 = all messages are logged (default behavior)
     # 1 = INFO messages are not printed
     # 2 = INFO and WARNING messages are not printed
@@ -37,6 +40,9 @@ tf.config.experimental.set_memory_growth(physical_device[0], True)
 #     layers.RandomZoom(height_factor=(-0.1, 0.1), width_factor=(-0.1, 0.1), seed=CFG.TF_SEED),
 # ], name='augmentation_layer')
 
+
+            # Resizing(224, 224, interpolation="bilinear", input_shape=shape),
+            # Lambda(tf.nn.local_response_normalization),
 
 def get_model(network_name, shape, num_classes):
     if network_name == 'CNN':
@@ -100,9 +106,75 @@ def get_model(network_name, shape, num_classes):
             Dense(4096, activation='relu'),
             Dense(num_classes, activation='sigmoid')
         ])
+    elif network_name == 'AlexNet':
+        model = tf.keras.Sequential([
+            Conv2D(filters=128, kernel_size=(11,11), strides=(4,4), activation='relu', input_shape=shape),
+            BatchNormalization(),
+            MaxPooling2D(pool_size=(2,2)),
+            Conv2D(filters=256, kernel_size=(5,5), strides=(1,1), activation='relu', padding="same"),
+            BatchNormalization(),
+            MaxPooling2D(pool_size=(3,3)),
+            Conv2D(filters=256, kernel_size=(3,3), strides=(1,1), activation='relu', padding="same"),
+            BatchNormalization(),
+            Conv2D(filters=256, kernel_size=(1,1), strides=(1,1), activation='relu', padding="same"),
+            BatchNormalization(),
+            Conv2D(filters=256, kernel_size=(1,1), strides=(1,1), activation='relu', padding="same"),
+            BatchNormalization(),
+            MaxPooling2D(pool_size=(2,2)),
+            Flatten(),
+            Dense(1024,activation='relu'),
+            Dropout(0.5),
+            Dense(1024,activation='relu'),
+            Dropout(0.5),
+            Dense(num_classes,activation='softmax')  
+        ])
+    elif network_name == 'InceptionV3':
+        base_model = tf.keras.applications.InceptionV3(weights='imagenet', include_top=False, input_shape=shape)
+        base_model.trainable = False
+        model = tf.keras.Sequential([
+            base_model,
+            GlobalAveragePooling2D(),
+            Dropout(0.5),
+            Dense(num_classes, activation='softmax'),
+        ])
+    elif network_name == 'EfficientNetV2':
+        base_model = tf.keras.applications.EfficientNetV2B0(weights='imagenet', include_top=False, input_shape=shape)
+        base_model.trainable = False
+        model = tf.keras.Sequential([
+            base_model,
+            GlobalAveragePooling2D(),
+            Dropout(0.5),
+            Dense(num_classes, activation='softmax'),
+        ])
+    elif network_name == 'ResNet50':
+        base_model = tf.keras.applications.ResNet50(weights='imagenet', include_top=False, input_shape=shape)
+        base_model.trainable = False
+        model = tf.keras.Sequential([
+            base_model,
+            GlobalAveragePooling2D(),
+            Dropout(0.5),
+            Dense(num_classes, activation='softmax'),
+        ])
+    elif network_name == 'InceptionResNetV2':
+        base_model = tf.keras.applications.inception_resnet_v2.InceptionResNetV2(weights='imagenet', include_top=False, input_shape=shape)
+        base_model.trainable = False
+        model = tf.keras.Sequential([
+            base_model,
+            GlobalAveragePooling2D(),
+            Dropout(0.5),
+            Dense(num_classes, activation='softmax'),
+        ])
     else:
         model = None
     return model
+
+
+
+    
+
+
+
+
 
 
 def NN(df: pd.DataFrame, network_name='CNN', epochs=20, batch_size=16, earlystop=True, 
