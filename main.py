@@ -1,29 +1,31 @@
 import neural_network
 from data_analyze import *
 path = './data'
+# path = './.archive/Training'
 
 
+#         df
+#                      image_path   class
+# 0  ./data/glioma/Tr-gl_0010.jpg  glioma
+# 1  ./data/glioma/Tr-gl_0011.jpg  glioma
+# 2  ./data/glioma/Tr-gl_0012.jpg  glioma
+# 3  ./data/glioma/Tr-gl_0013.jpg  glioma
+# 4  ./data/glioma/Tr-gl_0014.jpg  glioma
 if __name__ == '__main__':
     df = get_df(path = path)
-
-    #                   df
-    #                                           image_path           class
-    # 0         ./data/Astrocitoma T1/005_big_gallery.jpeg  Astrocitoma T1
-    # 1         ./data/Astrocitoma T1/006_big_gallery.jpeg  Astrocitoma T1
-    # 2  ./data/Astrocitoma T1/01809e58d2c1e7fff56cc5d8...  Astrocitoma T1
-    # 3  ./data/Astrocitoma T1/02df132a56dfb89ece42ee8d...  Astrocitoma T1
-    # 4  ./data/Astrocitoma T1/044d8d9984902ca03e652a6f...  Astrocitoma T1
-
-    # CNN   VGG16   VGG19   AlexNet 
-    # InceptionV3   EfficientNetV2
-    # ResNet50  InceptionResNetV2
-    network_name = 'InceptionResNetV2'
-    epochs = 25
-    batch_size = 16
+    # print(df.head())
+    
+    # CNN   VGG16   VGG19   AlexNet ResNet50
+    # InceptionResNetV2 InceptionV3   
+    # EfficientNetV2    EfficientNetB5
+    # AlexNet_own
+    network_name = 'AlexNet_own'
+    epochs = 10
+    batch_size = 32
 
     earlystop = False
     model_summary = True
-    save = True
+    save = False
 
     logging = True
     graphs = True
