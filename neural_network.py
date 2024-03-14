@@ -249,70 +249,68 @@ def get_model(network_name, shape, num_classes):
 
 
 
-    
 
-
-
-
-class MyThresholdCallback(tf.keras.callbacks.Callback):
-    def __init__(self, threshold):
-        super(MyThresholdCallback, self).__init__()
-        self.threshold = threshold
-
-    def on_epoch_end(self, epoch, logs=None): 
-        val_acc = logs["val_acc"]
-        if val_acc >= self.threshold:
-            self.model.stop_training = True
-
-def NN(df: pd.DataFrame, network_name='CNN', epochs=20, batch_size=16, earlystop=True, 
+def NN(network_name='CNN', epochs=20, batch_size=16, earlystop=True, 
        model_summary=False, logging=False, save=False, graphs=False):
     start_time = time.time()
 
-    train_df, test_df = train_test_split(df, test_size=0.66, shuffle=True, random_state=123, stratify=df['class'])
-    test_df, val_df = train_test_split(test_df, test_size=0.5, shuffle=True, random_state=123, stratify=test_df['class'])
-
     # Initialize parameters
-    num_classes = df['class'].unique().size
+    train_dir = './data_2/Training/'
+    test_dir  = './data_2/Testing/'
+    # train_dir = './.archive/archive (3)/Training/'
+    # test_dir  = './.archive/archive (3)/Testing/'
+
+    seed = 1
     channels = 3
-    img_size = (224, 224)
+    img_size = (150, 150)
+    # img_size = (224, 224)
     img_shape = (img_size[0], img_size[1], channels)
-    df_labels = {
+    class_labels = {
         'notumor': 0,
         'pituitary': 1,
         'glioma': 2,
-        'meningioma': 3 ,
+        'meningioma': 3,
     }
+    num_classes = len(class_labels.keys())
 
-    # Get images, put in X,y variables 
+    # getting data
     # region
-    flag = False
-    def get_xy(df):
-        '''Get from df images, put in X,y'''
-        X, y = [], []
-        for ind in df.index:
-            img = cv2.imread(str(df['image_path'][ind]))
-            resized_img = cv2.resize(img, img_size)
-            # show image
-            # if not flag:
-            #     cv2.imshow('image', resized_img)
-            #     cv2.waitKey(0)
-            #     exit()
-            X.append(resized_img) 
-            y.append(df_labels[df['class'][ind]])
+    train_paths, train_labels = get_data(train_dir)
+    test_paths, test_labels = get_data(test_dir)
+    
+    # Augmentation and preprocessing of training data
+    train_datagen = ImageDataGenerator(rescale=1./255,
+                                       rotation_range=10,
+                                       brightness_range=(0.85, 1.15),
+                                       width_shift_range=0.002,
+                                       height_shift_range=0.002,
+                                       shear_range=12.5,
+                                       zoom_range=0,
+                                       horizontal_flip=True,
+                                       vertical_flip=False,
+                                       fill_mode="nearest"
+                                       )
+    train_generator = train_datagen.flow_from_directory(train_dir,
+                                                        target_size=img_size,
+                                                        batch_size=batch_size,
+                                                        class_mode="categorical",
+                                                        seed=seed
+                                                        )
 
-        X = np.array(X)
-        y = np.array(y)
-        X = X/255
-        return X, y
+    # Augmentation and preprocessing of training data
+    # Just rescaling
+    test_datagen = ImageDataGenerator(rescale=1./255)
+    test_generator = test_datagen.flow_from_directory(test_dir,
+                                                      target_size=img_size,
+                                                      batch_size=batch_size,
+                                                      class_mode="categorical",
+                                                      shuffle=False,
+                                                      seed=seed)
 
-    X_train, y_train = get_xy(train_df)
-    X_test, y_test = get_xy(test_df)
-    X_val, y_val = get_xy(val_df)
-
-    y_train = pd.get_dummies(y_train)
-    y_test = pd.get_dummies(y_test)
-    y_val = pd.get_dummies(y_val)
+    steps_per_epoch = train_generator.samples // batch_size
+    validation_steps = test_generator.samples // batch_size
     # endregion
+    
 
     # Initialize model
     # region
@@ -326,6 +324,7 @@ def NN(df: pd.DataFrame, network_name='CNN', epochs=20, batch_size=16, earlystop
     # model.compile(Adamax(learning_rate= 0.001), loss= 'categorical_crossentropy', metrics=['acc'])
     # model.compile(optimizer="sgd", loss=tf.keras.losses.CategoricalCrossentropy(), metrics=['acc']) 
     model.compile(SGD(learning_rate=0.001), loss='categorical_crossentropy', metrics= ['acc'])
+    
     if save:
         model.save(f'./models/{network_name}.keras')
     # endregion
@@ -343,17 +342,17 @@ def NN(df: pd.DataFrame, network_name='CNN', epochs=20, batch_size=16, earlystop
 
     if earlystop:
         early_stop = EarlyStopping(monitor='loss',patience=2)
-        history = model.fit(X_train, y_train, epochs=epochs, 
+        history = model.fit(train_generator, epochs=epochs, 
                             batch_size=batch_size, verbose=logging, 
-                            validation_data=(X_val, y_val), callbacks=[early_stop, cp_callback])
+                            validation_data=test_generator, callbacks=[early_stop, cp_callback])
     else:
-        history = model.fit(X_train, y_train, epochs=epochs, 
+        history = model.fit(train_generator, epochs=epochs, 
                             batch_size=batch_size, verbose=logging, 
-                            validation_data=(X_val, y_val), callbacks=[cp_callback])
+                            validation_data=test_generator, callbacks=[cp_callback])
 
         
     # Network evaluation on a test set + summing up
-    loss, accuracy = model.evaluate(X_test, y_test)
+    loss, accuracy = model.evaluate(test_generator)
 
     if graphs:
         h1 = history.history

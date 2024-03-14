@@ -12,15 +12,15 @@ path = './data'
 # 3  ./data/glioma/Tr-gl_0013.jpg  glioma
 # 4  ./data/glioma/Tr-gl_0014.jpg  glioma
 if __name__ == '__main__':
-    df = get_df(path = path)
+    # df = get_df(path = path)
     # print(df.head())
     
     # CNN   VGG16   VGG19   AlexNet ResNet50
     # InceptionResNetV2 InceptionV3   
     # EfficientNetV2    EfficientNetB5
     # AlexNet_own
-    network_name = 'AlexNet_own'
-    epochs = 10
+    network_name = 'AlexNet'
+    epochs = 50
     batch_size = 32
 
     earlystop = False
@@ -30,7 +30,7 @@ if __name__ == '__main__':
     logging = True
     graphs = True
     
-    nn_model, nn_result = neural_network.NN(df, 
+    nn_model, nn_result = neural_network.NN(
                                             network_name=network_name, 
                                             epochs=epochs, 
                                             batch_size=batch_size,
