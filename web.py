@@ -8,6 +8,11 @@ app = Flask(__name__)
 UPLOAD_FOLDER = 'uploads'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
+checkpoint_path = './checkpoints/OwnV2.epoch36-val_acc0.9922.hdf5'
+
+model = MRIImageClassifier()
+model.load_model_from_checkpoint(checkpoint_path)
+
 @app.route('/', methods=['GET', 'POST'])
 def index():
     if request.method == 'POST':
@@ -25,9 +30,7 @@ def index():
             file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
             file.save(file_path)
             # Classify
-            checkpoint_path = './checkpoints/OwnV2.epoch36-val_acc0.9922.hdf5'
-            loaded_model = load_model_from_checkpoint(checkpoint_path, 'OwnV2')
-            predicted_class = classify_image(file_path, loaded_model)
+            predicted_class = model.classify_image(file_path)
             return render_template('index.html', text=predicted_class)
     return render_template('index.html')
   

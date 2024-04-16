@@ -21,6 +21,3 @@ def get_data(path: str, shuffle: bool = True) -> pd.DataFrame:
         image_paths, image_class = shuffle(image_paths, image_class)
 
     return image_paths, image_class
-
-    df = pd.DataFrame({'image_path': image_paths, 'class': image_class})
-    return df
