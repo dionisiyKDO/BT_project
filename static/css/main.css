@@ -1,0 +1,77 @@
+/* Globals */
+html {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 18px;
+    line-height: 1.5;
+}
+
+body {
+    position: relative;
+    min-height: 100vh;
+}
+
+footer {
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+    text-align: center;
+}
+
+/* Upload */
+
+form {
+    margin: 0 auto;
+}
+
+h2 {
+    font-size: 22px;
+    margin-bottom: 1rem;
+}
+
+.image-container .preview {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.image-container .preview-item {
+    display: block;
+}
+
+
+
+
+
+.image-container{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    max-width: 400px;
+}
+
+.image-container-header {
+    width: 100%;
+    max-width: 400px;
+    height: 50px;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-around;
+    align-items: center;
+    margin-bottom: 0.3rem;
+}
+
+.image-container-header button {
+    width: 170px;
+    cursor: pointer;
+}
+
+.image-container  h2 {
+    margin-bottom: 0.5rem;
+    text-align: center;
+}
+
+.image-container img {
+    margin-bottom: 1rem;
+    border-radius: 1.5rem;
+    height: min-content;
+}

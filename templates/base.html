@@ -1,19 +1,41 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    {% block head %}{% endblock %}
-    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/reset.css') }}" >
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css"/>
+    <!-- href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.fuchia.min.css" -->
 
-    <style>
-        
-    </style>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}" >
+
+    {% block head %}{% endblock %}
 </head>
 <body>
-    <div class="container">
+    <header class="container">
+        <nav>
+            <ul>
+                <li><a href="/">Home</a></li>
+                <li><a href="/upload">Upload</a></li>
+            </ul>
+        </nav>
+    </header>
+
+
+    <main  class="container">
         {% block content %}
         {% endblock %}
-    </div>
+    </main>
+
+
+    <footer class="container">
+        <small>
+            Built with 
+            <a href="https://picocss.com">Pico</a> • 
+            <a href="https://github.com/picocss/examples/blob/master/v2-html/index.html" >Source code</a >
+        </small>
+    </footer>
 </body>
 </html>
+
+    

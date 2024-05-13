@@ -1,0 +1,71 @@
+
+
+
+
+{% extends 'base.html' %}
+
+{% block head %}
+  <title>Classify</title>
+{% endblock %}
+
+{% block content %}
+
+<section>
+    <div class="grid">
+        <form id="uploadForm" method="POST" enctype="multipart/form-data">
+            {{ form.hidden_tag() }}
+
+            <h2>Upload Image</h1>
+            
+            {% for error in form.image.errors %}
+                <p style="color: red;">{{ error }}</p>
+            {% endfor %}
+
+            <input type="file" id="imageInput" name="image" accept="image/*" onchange="previewImage(event)">
+            <button type="submit">Submit</button>
+        </form>
+
+        <div class="image-container container preview" id="imagePreview" style="display: none;">
+            <div class="image-container-header">
+                <h2 class="preview-item">Selected Image:</h2>
+                <button type="submit" onclick="clearImage()">Clear Image</button>
+            </div>
+            <img class="preview-item" id="preview" src="#" alt="Selected Image">
+        </div>
+
+        {% if text %}
+        <div class="image-container container">
+            <div class="image-container-header">
+                <h2>Classification Result: <strong>{{ text }}</strong></h2>
+            </div>
+            <img src="{{ file_url }}" alt="MRI_image">
+        </div>
+        {% endif %}
+    </div>
+</section>
+
+<script>
+    function previewImage(event) {
+        var input = event.target;
+        var preview = document.getElementById('preview');
+        var previewDiv = document.getElementById('imagePreview');
+
+        if (input.files && input.files[0]) {
+            var reader = new FileReader();
+
+            reader.onload = function (e) {
+                preview.src = e.target.result;
+            }
+
+            reader.readAsDataURL(input.files[0]);
+            previewDiv.style.display = 'flex';
+        }
+    }
+
+    function clearImage() {
+        document.getElementById('imageInput').value = "";
+        document.getElementById('imagePreview').style.display = 'none';
+    }
+</script>
+
+{% endblock %}
