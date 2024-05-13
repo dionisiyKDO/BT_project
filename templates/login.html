@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+
+{% block head %}
+  <title>Login</title>
+{% endblock %}
+
+{% block content %}
+
+<div class="container loginform">
+    <form id="registerForm" method="POST">
+        {{ form.hidden_tag() }}
+
+        <h2>Login Form</h1>
+        
+        {{ form.username }}
+        {% for error in form.username.errors %}
+            <p style="color: red;">{{ error }}</p>
+        {% endfor %}
+
+        {{ form.password }}
+        {% for error in form.password.errors %}
+            <p style="color: red;">{{ error }}</p>
+        {% endfor %}
+
+        {{ form.submit }}
+    </form>
+
+</div>
+
+{% endblock %}

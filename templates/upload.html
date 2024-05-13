@@ -1,7 +1,3 @@
-
-
-
-
 {% extends 'base.html' %}
 
 {% block head %}
@@ -12,7 +8,7 @@
 
 <section>
     <div class="grid">
-        <form id="uploadForm" method="POST" enctype="multipart/form-data">
+        <form class="grid-item" id="uploadForm" method="POST" enctype="multipart/form-data" onsubmit="handleSubmit()">
             {{ form.hidden_tag() }}
 
             <h2>Upload Image</h1>
@@ -20,23 +16,23 @@
             {% for error in form.image.errors %}
                 <p style="color: red;">{{ error }}</p>
             {% endfor %}
-
+            
             <input type="file" id="imageInput" name="image" accept="image/*" onchange="previewImage(event)">
-            <button type="submit">Submit</button>
+            <button id="submitButton" type="submit">Submit</button>
         </form>
 
-        <div class="image-container container preview" id="imagePreview" style="display: none;">
+        <div class="grid-item image-container container preview" id="imagePreview" style="display: none;">
             <div class="image-container-header">
-                <h2 class="preview-item">Selected Image:</h2>
+                <h3 class="preview-item">Selected Image:</h3>
                 <button type="submit" onclick="clearImage()">Clear Image</button>
             </div>
             <img class="preview-item" id="preview" src="#" alt="Selected Image">
         </div>
 
         {% if text %}
-        <div class="image-container container">
+        <div class="grid-item image-container container">
             <div class="image-container-header">
-                <h2>Classification Result: <strong>{{ text }}</strong></h2>
+                <h3>Classification Result: <strong>{{ text }}</strong></h3>
             </div>
             <img src="{{ file_url }}" alt="MRI_image">
         </div>
@@ -66,6 +62,12 @@
         document.getElementById('imageInput').value = "";
         document.getElementById('imagePreview').style.display = 'none';
     }
-</script>
 
+    function handleSubmit() {
+        var submitButton = document.getElementById('submitButton');
+        submitButton.setAttribute('aria-busy', 'true');
+        submitButton.textContent = 'Processing...';
+        submitButton.disabled = true;
+    }
+</script>
 {% endblock %}

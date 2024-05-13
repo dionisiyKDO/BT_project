@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/reset.css') }}" >
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.cyan.min.css"/>
     <!-- href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.fuchia.min.css" -->
 
     <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}" >
@@ -15,8 +15,23 @@
     <header class="container">
         <nav>
             <ul>
-                <li><a href="/">Home</a></li>
-                <li><a href="/upload">Upload</a></li>
+                <li><strong>MRI Classification</strong></li>
+                {% if current_user.is_authenticated %}
+                    <li>Dr.{{ current_user.username }}</li>
+                {% endif %}
+            </ul>
+            <ul>
+                <li><a href="{{url_for('home')}}">Home</a></li>
+                <li><a href="{{url_for('upload')}}">Upload</a></li>
+                
+                {% if not current_user.is_authenticated %}
+                    <li><a href="{{url_for('login')}}">Login</a></li>
+                    <li><a href="{{url_for('register')}}">Register</a></li>
+                {% endif %}
+                
+                {% if current_user.is_authenticated %}
+                    <li><a href="{{url_for('logout')}}">Logout</a></li>
+                {% endif %}
             </ul>
         </nav>
     </header>
@@ -30,9 +45,7 @@
 
     <footer class="container">
         <small>
-            Built with 
-            <a href="https://picocss.com">Pico</a> • 
-            <a href="https://github.com/picocss/examples/blob/master/v2-html/index.html" >Source code</a >
+            Kamiskyi Denys
         </small>
     </footer>
 </body>
