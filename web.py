@@ -9,6 +9,7 @@ from flask_login import LoginManager, UserMixin, login_user, login_required, log
 from wtforms import SubmitField, StringField, PasswordField
 from wtforms.validators import DataRequired, Length, InputRequired, ValidationError
 from flask_bcrypt import Bcrypt
+from datetime import datetime
 import os
 
 # Load the model
@@ -47,6 +48,29 @@ def load_user(user_id):
 
 # endregion
 
+
+
+
+class User(UserMixin, db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(100), nullable=False, unique=True)
+    password = db.Column(db.String(100), nullable=False)
+    images = db.relationship('Image')
+
+class Image(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    filename = db.Column(db.String(100), nullable=False)
+    diagnosis = db.Column(db.String(100), nullable=False)
+    timestamp = db.Column(db.DateTime(timezone=True), nullable=False, default=datetime.utcnow)
+    doctor = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+
+    def __repr__(self):
+        return f"Image('{self.filename}', '{self.doctor}')"
+
+
+
+
+
 # Upload page
 # region
 
@@ -71,16 +95,17 @@ def upload():
         filename = images.save(form.image.data)
         file_url = url_for('get_file', filename=filename)
         predicted_class = model.classify_image(os.path.join(app.config['UPLOADED_IMAGES_DEST'], filename))
+        image = Image(filename=filename, diagnosis=predicted_class, doctor=current_user.id)
+        db.session.add(image)
+        db.session.commit()
         return render_template('upload.html', form=form, text=predicted_class, file_url=file_url, user=current_user)
     return render_template('upload.html', form=form, user=current_user)
 
 # endregion
 
+# User authentication
+# region
 
-class User(UserMixin, db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(100), nullable=False, unique=True)
-    password = db.Column(db.String(100), nullable=False)
 
 class LoginForm(FlaskForm):
     username = StringField('username', validators=[InputRequired(), Length(min=4, max=30)], render_kw={"placeholder": "Username"})
@@ -104,7 +129,7 @@ def login():
         user = User.query.filter_by(username=form.username.data).first()
         if user and bcrypt.check_password_hash(user.password, form.password.data):
             login_user(user, remember=True)
-            return redirect(url_for('dashboard'))
+            return redirect(url_for('profile'))
 
     return render_template('login.html', form=form)
 
@@ -127,11 +152,14 @@ def logout():
     logout_user()
     return redirect(url_for('home'))
 
+# endregion
 
-@app.route('/dashboard', methods=['GET', 'POST'])
+
+@app.route('/profile', methods=['GET', 'POST'])
 @login_required
-def dashboard():
-    return render_template('dashboard.html')
+def profile():
+    images = Image.query.filter_by(doctor=current_user.id).all()
+    return render_template('profile.html', images=images, user=current_user)
 
 
 @app.route('/home', methods=['GET', 'POST'])

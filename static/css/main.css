@@ -21,6 +21,10 @@ button {
 }
 /* #endregion */
 
+.registerform, .loginform {
+    max-width: 500px;
+}
+
 /* Upload */
 /* #region */
 
@@ -63,6 +67,36 @@ h3 {
 }
 /* #endregion */
 
-.registerform, .loginform {
-    max-width: 500px;
+/* Profile */
+/* #region */
+.cards-item img {
+    object-fit: cover;
+    border-radius: 1.5rem;
+    height: 200px;
+}
+
+.grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+}
+
+
+.cards-item {
+    border: 1px solid var(--card-border-color);
+    padding: 1rem;
+    border-radius: 8px;
+    text-align: center;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+    transition: transform 0.3s ease-in-out;
+}
+
+.cards-item:hover {
+    transform: translateY(-5px); 
+}
+
+.cards-item img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 8px;
 }
