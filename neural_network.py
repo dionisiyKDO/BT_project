@@ -1,4 +1,3 @@
-from data_analyze import *
 import os, random, cv2, time, keras, datetime
 from PIL import Image
 

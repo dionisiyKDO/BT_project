@@ -9,15 +9,17 @@
 <div class="profile-container container">
     <h1>Profile Dr. {{ current_user.username }}</h1>
     <h2>All Images</h2>
+    
     <div class="grid cards">
         {% for image in images %}
-            <div class="cards-item">
-                <img src="{{ url_for('get_file', filename=image.filename) }}" alt="{{ image.filename }}">
-                <p>Diagnosis: {{ image.diagnosis }}</p>
-                <p>Uploaded at: {{ image.timestamp }}</p>
-            </div>
+        <div class="cards-item">
+            <img src="{{ url_for('get_file', filename=image.filename) }}" alt="{{ image.filename }}">
+            <p>Diagnosis: {{ image.diagnosis }}</p>
+            <p>Uploaded: <br>{{ image.timestamp  | formatdatetime }}</p>
+        </div>
         {% endfor %}
     </div>
+
 </div>
 
 {% endblock %}

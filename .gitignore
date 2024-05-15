@@ -1,20 +1,7 @@
 /data
-/data_2
 /checkpoints
 /.archive
-/models
-/uploads
-
-main_old.py
-neural_network_old.py
-data_analyze_old.py
-
-test.py
-test_2.py
-test.ipynb
-
-notebook.ipynb
-notebook_test.ipynb
+app/uploads
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
