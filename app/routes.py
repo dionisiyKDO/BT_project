@@ -1,7 +1,7 @@
 from app import app
 
 from app.forms import UploadForm, LoginForm, RegisterForm, images
-from app.models import db, User, Image
+from app.models import db, User
 
 from neural_network import MRIImageClassifier
 
@@ -45,6 +45,9 @@ model.load_model_from_checkpoint(checkpoint_path)
 
 
 
+@app.route('/', methods=['GET', 'POST'])
+def index():
+    return redirect(url_for('home'))
 
 @app.route('/upload', methods=['GET', 'POST'])
 @login_required
@@ -53,11 +56,10 @@ def upload():
     if form.validate_on_submit():
         filename = images.save(form.image.data)
         file_url = url_for('get_file', filename=filename)
-        print(f"File URL: {file_url}")  # Debugging line
         predicted_class = model.classify_image(os.path.join(app.config['UPLOADED_IMAGES_DEST'], filename))
-        image = Image(filename=filename, diagnosis=predicted_class, doctor_id=current_user.id)
-        db.session.add(image)
-        db.session.commit()
+        # image = Image(filename=filename, diagnosis=predicted_class, doctor_id=current_user.id)
+        # db.session.add(image)
+        # db.session.commit()
         return render_template('upload.html', form=form, text=predicted_class, file_url=file_url, user=current_user)
     return render_template('upload.html', form=form, user=current_user)
 
@@ -91,7 +93,7 @@ def logout():
 @app.route('/profile', methods=['GET', 'POST'])
 @login_required
 def profile():
-    images = Image.query.filter_by(doctor_id=current_user.id).all()
+    # images = Image.query.filter_by(doctor_id=current_user.id).all()
     return render_template('profile.html', images=images, user=current_user)
 
 @app.route('/home', methods=['GET', 'POST'])
