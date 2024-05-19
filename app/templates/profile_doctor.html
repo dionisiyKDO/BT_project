@@ -11,11 +11,11 @@
     <h2>All Images</h2>
     
     <div class="grid cards">
-        {% for image in images %}
+        {% for mri_scan in mri_scans %}
         <div class="cards-item">
-            <img src="{{ url_for('get_file', filename=image.filename) }}" alt="{{ image.filename }}">
-            <p>Diagnosis: {{ image.diagnosis }}</p>
-            <p>Uploaded: <br>{{ image.timestamp  | formatdatetime }}</p>
+            <img src="{{ url_for('get_file', filename=mri_scan.filename) }}" alt="{{ mri_scan.filename }}">
+            <p>Diagnosis: {{ mri_scan.diagnosis }}</p>
+            <p>Uploaded: <br>{{ mri_scan.timestamp  | formatdatetime }}</p>
         </div>
         {% endfor %}
     </div>

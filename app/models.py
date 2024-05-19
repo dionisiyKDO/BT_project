@@ -38,6 +38,7 @@ class Doctor(db.Model):
 
     first_name = db.Column(db.String(255), nullable=False)
     last_name  = db.Column(db.String(255), nullable=False)
+    birth_date = db.Column(db.Date, nullable=False)
     specialty  = db.Column(db.String(255))
 
     user       = db.relationship('User',    back_populates='doctor')
@@ -56,7 +57,6 @@ class Patient(db.Model):
 
     user       = db.relationship('User',    back_populates='patient')
     mri_scans  = db.relationship('MRIScan', back_populates='patient')
-
 
 
 class MRIScan(db.Model):
@@ -87,7 +87,3 @@ class Comment(db.Model):
 
     mri_scan   = db.relationship('MRIScan', back_populates='comments')
     doctor     = db.relationship('Doctor',  back_populates='comments')
-
-
-if __name__ == "__main__":
-    ...

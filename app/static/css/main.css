@@ -24,6 +24,13 @@ button {
 .registerform, .loginform {
     max-width: 500px;
 }
+.registerform label, .loginform label {
+    margin-bottom: 0px;
+}
+.registerform span, .loginform span {
+    display: inline-block;
+    padding-bottom: 5px;
+}
 
 /* Upload */
 /* #region */

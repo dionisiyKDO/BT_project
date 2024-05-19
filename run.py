@@ -21,12 +21,12 @@ def create_database_items():
         user4 = User(email='user4_doctor@example.com', username='user4_doctor', password='password4', role='doctor')
 
         # Create doctors
-        doctor1 = Doctor(user=user2, first_name='John', last_name='Doe', specialty='Neurology')
-        doctor2 = Doctor(user=user4, first_name='Jane', last_name='Smith', specialty='Radiology')
+        doctor1 = Doctor(user=user2, first_name='John', last_name='Doe',   specialty='Neurology', birth_date=date(1991, 5, 11))
+        doctor2 = Doctor(user=user4, first_name='Jane', last_name='Smith', specialty='Radiology', birth_date=date(1982, 3, 15))
 
         # Create patients
-        patient1 = Patient(user=user1, first_name='Alice', last_name='Johnson', birth_date=date(1990, 1, 1))
-        patient2 = Patient(user=user3, first_name='Bob', last_name='Williams', birth_date=date(1985, 5, 10))
+        patient1 = Patient(user=user1, first_name='Alice', last_name='Johnson',  birth_date=date(1990, 1, 1))
+        patient2 = Patient(user=user3, first_name='Bob',   last_name='Williams', birth_date=date(1985, 5, 10))
 
         # Add items to the database session
         try:

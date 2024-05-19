@@ -1,24 +1,25 @@
 from app import app
 
 from app.forms import UploadForm, LoginForm, RegisterForm, images
-from app.models import db, User
+from app.models import db, User, Doctor, Patient, MRIScan, Comment 
 
 from neural_network import MRIImageClassifier
 
-from flask import render_template, request, redirect, url_for, send_from_directory
+from flask import flash, render_template, request, redirect, url_for, send_from_directory
 from flask_login import LoginManager, login_user, login_required, logout_user, current_user
 from flask_uploads import UploadSet, IMAGES, configure_uploads
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_bcrypt import Bcrypt
 import os
 
-
+# Initialize extensions
 db.init_app(app)
 bcrypt = Bcrypt(app)
 login_manager = LoginManager(app)
 login_manager.login_view = 'login'
 configure_uploads(app, images)
 
+# Create database tables if they don't exist
 with app.app_context():
     db.create_all()
 
@@ -57,8 +58,13 @@ def upload():
         filename = images.save(form.image.data)
         file_url = url_for('get_file', filename=filename)
         predicted_class = model.classify_image(os.path.join(app.config['UPLOADED_IMAGES_DEST'], filename))
-        # image = Image(filename=filename, diagnosis=predicted_class, doctor_id=current_user.id)
-        # db.session.add(image)
+        # mri_scan = MRIScan(
+        #     file_name=filename,
+        #     diagnosis=predicted_class,
+        #     patient_id=patient,  # Assuming current_user is a Patient
+        #     diagnosed_by_doctor=current_user,
+        # )
+        # db.session.add(mri_scan)
         # db.session.commit()
         return render_template('upload.html', form=form, text=predicted_class, file_url=file_url, user=current_user)
     return render_template('upload.html', form=form, user=current_user)
@@ -67,10 +73,12 @@ def upload():
 def login():
     form = LoginForm()
     if form.validate_on_submit():
-        user = User.query.filter_by(username=form.username.data).first()
+        user = User.query.filter_by(email=form.email.data).first()
         if user and check_password_hash(user.password, form.password.data):
             login_user(user, remember=True)
             return redirect(url_for('profile'))
+        else:
+            flash('Invalid email or password', 'danger')
     return render_template('login.html', form=form)
 
 @app.route('/register', methods=['GET', 'POST'])
@@ -78,10 +86,35 @@ def register():
     form = RegisterForm()
     if form.validate_on_submit():
         hashed_password = generate_password_hash(form.password.data)
-        user = User(username=form.username.data, password=hashed_password)
+        user = User(
+            email=form.email.data,
+            username=form.username.data,
+            password=hashed_password,
+            role=form.role.data
+        )
         db.session.add(user)
         db.session.commit()
-        return redirect(url_for('home'))
+
+        if form.role.data == 'doctor':
+            doctor = Doctor(
+                user_id=user.id,
+                first_name=form.first_name.data,
+                last_name=form.last_name.data,
+                birth_date=form.birth_date.data,
+                specialty=form.specialty.data
+            )
+            db.session.add(doctor)
+        else:
+            patient = Patient(
+                user_id=user.id,
+                first_name=form.first_name.data,
+                last_name=form.last_name.data,
+                birth_date=form.birth_date.data
+            )
+            db.session.add(patient)
+        db.session.commit()
+        flash('Registration successful. Please log in.', 'success')
+        return redirect(url_for('login'))
     return render_template('register.html', form=form)
 
 @app.route('/logout', methods=['GET', 'POST'])
@@ -93,8 +126,13 @@ def logout():
 @app.route('/profile', methods=['GET', 'POST'])
 @login_required
 def profile():
-    # images = Image.query.filter_by(doctor_id=current_user.id).all()
-    return render_template('profile.html', images=images, user=current_user)
+    if current_user.role == 'doctor':
+        mri_scans = MRIScan.query.filter_by(diagnosed_by=current_user.doctor.id).all()
+        return render_template('profile_doctor.html', mri_scans=mri_scans, user=current_user)
+    else:
+        mri_scans = MRIScan.query.filter_by(patient_id=current_user.patient.id).all()
+        return render_template('profile_patient.html', mri_scans=mri_scans, user=current_user)
+
 
 @app.route('/home', methods=['GET', 'POST'])
 def home():

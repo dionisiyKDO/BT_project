@@ -10,19 +10,20 @@
     <form id="registerForm" method="POST">
         {{ form.hidden_tag() }}
 
-        <h2>Login Form</h1>
-        
-        {{ form.username }}
-        {% for error in form.username.errors %}
-            <p style="color: red;">{{ error }}</p>
+        <h2>Login Form</h2>
+
+        {{ form.email(size=32) }}<br>
+        {% for error in form.email.errors %}
+            <span style="color: red;">[{{ error }}]</span>
         {% endfor %}
 
-        {{ form.password }}
+        {{ form.password(size=32) }}<br>
         {% for error in form.password.errors %}
-            <p style="color: red;">{{ error }}</p>
+            <span style="color: red;">[{{ error }}]</span>
         {% endfor %}
-
+        
         {{ form.submit }}
+        
     </form>
 
 </div>
