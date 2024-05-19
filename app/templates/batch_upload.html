@@ -1,0 +1,71 @@
+{% extends 'base.html' %}
+
+{% block head %}
+    <title>Batch Upload</title>
+    <script>
+        function previewImages(event) {
+            var files = event.target.files;
+            var previewContainer = document.getElementById('previewContainer');
+            previewContainer.innerHTML = '';
+
+            if (files) {
+                Array.from(files).forEach(file => {
+                    var reader = new FileReader();
+                    reader.onload = function(e) {
+                        var img = document.createElement('img');
+                        img.src = e.target.result;
+                        img.className = 'preview-item';
+                        previewContainer.appendChild(img);
+                    }
+                    reader.readAsDataURL(file);
+                });
+            }
+        }
+
+        function clearImages() {
+            document.getElementById('imageInput').value = "";
+            document.getElementById('previewContainer').innerHTML = '';
+        }
+
+        function handleSubmit() {
+            var submitButton = document.getElementById('submitButton');
+            submitButton.disabled = true;
+        }
+    </script>
+{% endblock %}
+
+{% block content %}
+<div class="upload-container">
+    <form id="uploadForm" method="POST" enctype="multipart/form-data" onsubmit="handleSubmit()">
+        {{ form.hidden_tag() }}
+
+        <h2>Batch Upload Images</h2>
+
+        {{ form.images(id="imageInput", onchange="previewImages(event)") }}<br>
+        {% for error in form.images.errors %}
+            <span style="color: red;">{{ error }}</span>
+        {% endfor %}
+
+        {{ form.submit(id="submitButton") }}
+    </form>
+
+    <div class="grid image-container preview" id="previewContainer"> </div>
+
+    {% if results %}
+        <h2>Classification Results</h2>
+        <div class="grid image-container">
+            {% for file_name, predicted_class in results %}
+            <div class="grid-item">
+                <div class="image-container-header">
+                    <h3>{{ predicted_class }}</h3>
+                </div> 
+                <img src="{{ url_for('get_file', filename=file_name) }}" alt="MRI_image">
+            </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+
+    
+</div>
+{% endblock %}

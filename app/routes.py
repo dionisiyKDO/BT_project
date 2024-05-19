@@ -1,7 +1,7 @@
 from neural_network import MRIImageClassifier
 from app import app
 
-from app.forms import CommentForm, UploadForm, LoginForm, RegisterForm, mri_scans
+from app.forms import CommentForm, UploadForm, LoginForm, RegisterForm, mri_scans, BatchUploadForm
 from app.models import db, User, Doctor, Patient, MRIScan, Comment 
 
 from flask import flash, render_template, redirect, url_for, send_from_directory
@@ -176,3 +176,20 @@ def upload():
         flash('Image uploaded and classified successfully!', 'success')
         return render_template('upload.html', form=form, text=predicted_class, file_url=file_url, user=current_user)
     return render_template('upload.html', form=form, user=current_user)
+
+@app.route('/batch_upload', methods=['GET', 'POST'])
+@login_required
+def batch_upload():
+    form = BatchUploadForm()
+    if form.validate_on_submit():
+        uploaded_files = form.images.data
+        results = []
+        for uploaded_file in uploaded_files:
+            if uploaded_file:
+                file_name = mri_scans.save(uploaded_file)
+                predicted_class = model.classify_image(os.path.join(app.config['UPLOADED_IMAGES_DEST'], file_name))
+                results.append((file_name, predicted_class))
+        flash('Images uploaded and classified successfully!', 'success')
+        return render_template('batch_upload.html', form=form, results=results, user=current_user)
+    
+    return render_template('batch_upload.html', form=form, user=current_user)

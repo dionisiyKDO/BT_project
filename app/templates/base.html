@@ -27,6 +27,7 @@
 
                 {% if current_user.is_authenticated and current_user.doctor %}
                     <li><a href="{{url_for('upload')}}">Upload</a></li>
+                    <li><a href="{{url_for('batch_upload')}}">BatchUpload</a></li>
                 {% endif %}
                 
                 {% if current_user.is_authenticated %}

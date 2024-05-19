@@ -1,7 +1,7 @@
 from flask_wtf import FlaskForm
 from wtforms import SubmitField, StringField, PasswordField, SelectField, DateField, TextAreaField
 from wtforms_sqlalchemy.fields import QuerySelectField
-from flask_wtf.file import FileField, FileRequired, FileAllowed
+from flask_wtf.file import FileField, FileRequired, FileAllowed, MultipleFileField
 from wtforms.validators import InputRequired, Length, ValidationError, Email, DataRequired, EqualTo
 from flask_uploads import UploadSet, IMAGES
 from app.models import User, Patient
@@ -13,9 +13,13 @@ def patient_query():
     return Patient.query
 
 class UploadForm(FlaskForm):
-    image   = FileField(validators=[FileAllowed(mri_scans, 'Images only!'), FileRequired('File field should not be empty!')])
+    image   = FileField('Upload Image', validators=[FileAllowed(mri_scans, 'Images only!'), FileRequired('File field should not be empty!')])
     patient = QuerySelectField('Select Patient', query_factory=patient_query, allow_blank=False)
     submit  = SubmitField('Upload')
+
+class BatchUploadForm(FlaskForm):
+    images = MultipleFileField('Upload Images', validators=[FileAllowed(mri_scans, 'Images only!'), FileRequired('File field should not be empty!')])
+    submit = SubmitField('Upload')
 
 class CommentForm(FlaskForm):
     comment = TextAreaField('Comment', validators=[InputRequired()], render_kw={"rows": 4})

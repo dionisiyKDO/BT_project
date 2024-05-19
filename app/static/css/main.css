@@ -59,6 +59,7 @@ span {
 /* #region */
 
 .upload-container h2 {
+    text-align: center;
     font-size: 2rem;
     margin-bottom: 1rem;
 }
@@ -109,7 +110,7 @@ span {
     object-fit: cover;
     border-radius: 1.5rem;
     width: 100%;
-    max-width: 300px;
+    max-width: 400px;
     max-height: 500px;
 }
 
@@ -153,7 +154,6 @@ span {
     text-decoration: none;
 }
 /* #endregion */
-
 
 /* file comment */
 /* #region */
