@@ -58,6 +58,10 @@ class Patient(db.Model):
     user       = db.relationship('User',    back_populates='patient')
     mri_scans  = db.relationship('MRIScan', back_populates='patient')
 
+    def __str__(self) -> str:
+        return f'{self.first_name} {self.last_name}'
+    # def __repr__(self) -> str:
+    #     return f'{self.first_name} {self.last_name}'
 
 class MRIScan(db.Model):
     __tablename__ = 'mri_scans'

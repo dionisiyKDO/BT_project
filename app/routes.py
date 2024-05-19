@@ -1,6 +1,7 @@
+from datetime import datetime, timezone
 from app import app
 
-from app.forms import UploadForm, LoginForm, RegisterForm, images
+from app.forms import UploadForm, LoginForm, RegisterForm, mri_scans
 from app.models import db, User, Doctor, Patient, MRIScan, Comment 
 
 from neural_network import MRIImageClassifier
@@ -17,7 +18,7 @@ db.init_app(app)
 bcrypt = Bcrypt(app)
 login_manager = LoginManager(app)
 login_manager.login_view = 'login'
-configure_uploads(app, images)
+configure_uploads(app, mri_scans)
 
 # Create database tables if they don't exist
 with app.app_context():
@@ -50,24 +51,9 @@ model.load_model_from_checkpoint(checkpoint_path)
 def index():
     return redirect(url_for('home'))
 
-@app.route('/upload', methods=['GET', 'POST'])
-@login_required
-def upload():
-    form = UploadForm()
-    if form.validate_on_submit():
-        filename = images.save(form.image.data)
-        file_url = url_for('get_file', filename=filename)
-        predicted_class = model.classify_image(os.path.join(app.config['UPLOADED_IMAGES_DEST'], filename))
-        # mri_scan = MRIScan(
-        #     file_name=filename,
-        #     diagnosis=predicted_class,
-        #     patient_id=patient,  # Assuming current_user is a Patient
-        #     diagnosed_by_doctor=current_user,
-        # )
-        # db.session.add(mri_scan)
-        # db.session.commit()
-        return render_template('upload.html', form=form, text=predicted_class, file_url=file_url, user=current_user)
-    return render_template('upload.html', form=form, user=current_user)
+@app.route('/home', methods=['GET', 'POST'])
+def home():
+    return render_template('index.html')
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -133,7 +119,26 @@ def profile():
         mri_scans = MRIScan.query.filter_by(patient_id=current_user.patient.id).all()
         return render_template('profile_patient.html', mri_scans=mri_scans, user=current_user)
 
-
-@app.route('/home', methods=['GET', 'POST'])
-def home():
-    return render_template('index.html')
+@app.route('/upload', methods=['GET', 'POST'])
+@login_required
+def upload():
+    form = UploadForm()
+    if form.validate_on_submit():
+        file_name = mri_scans.save(form.image.data)
+        patient = form.patient.data
+        file_url = url_for('get_file', filename=file_name)
+        predicted_class = model.classify_image(os.path.join(app.config['UPLOADED_IMAGES_DEST'], file_name))
+        mri_scan = MRIScan(
+            file_name=file_name,
+            diagnosis=predicted_class,
+            # patient_id=patient.id,
+            # diagnosed_by=current_user.doctor.id,
+            upload_date=datetime.now(timezone.utc),
+            patient=patient,
+            diagnosed_by_doctor=current_user.doctor,
+        )
+        db.session.add(mri_scan)
+        db.session.commit()
+        flash('Image uploaded and classified successfully!', 'success')
+        return render_template('upload.html', form=form, text=predicted_class, file_url=file_url, user=current_user)
+    return render_template('upload.html', form=form, user=current_user)

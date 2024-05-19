@@ -43,6 +43,10 @@ h3 {
     max-width: 400px;
 }
 
+.grid-item label {
+    margin-bottom: 5px;
+}
+
 .image-container{
     display: flex;
     flex-direction: column;
