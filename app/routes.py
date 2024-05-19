@@ -1,16 +1,16 @@
-from datetime import datetime, timezone
+from neural_network import MRIImageClassifier
 from app import app
 
-from app.forms import UploadForm, LoginForm, RegisterForm, mri_scans
+from app.forms import CommentForm, UploadForm, LoginForm, RegisterForm, mri_scans
 from app.models import db, User, Doctor, Patient, MRIScan, Comment 
 
-from neural_network import MRIImageClassifier
-
-from flask import flash, render_template, request, redirect, url_for, send_from_directory
+from flask import flash, render_template, redirect, url_for, send_from_directory
 from flask_login import LoginManager, login_user, login_required, logout_user, current_user
-from flask_uploads import UploadSet, IMAGES, configure_uploads
+from flask_uploads import configure_uploads
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_bcrypt import Bcrypt
+
+from datetime import datetime, timezone
 import os
 
 # Initialize extensions
@@ -119,6 +119,42 @@ def profile():
         mri_scans = MRIScan.query.filter_by(patient_id=current_user.patient.id).all()
         return render_template('profile_patient.html', mri_scans=mri_scans, user=current_user)
 
+@app.route('/profile/<filename>', methods=['GET', 'POST'])
+@login_required
+def image(filename):
+    # return render_template('profile_patient.html', mri_scans=mri_scans, user=current_user)
+
+    if not current_user.is_authenticated or current_user.role != 'doctor':
+        flash("Access denied.", "danger")
+        return redirect(url_for('index'))
+
+    # Query the MRI scan by filename
+    mri_scan = MRIScan.query.filter_by(file_name=filename).first()
+    if not mri_scan:
+        flash("MRI scan not found.", "danger")
+        return redirect(url_for('profile'))
+
+    form = CommentForm()
+    if form.validate_on_submit():
+        new_comment = Comment(
+            mri_scan_id=mri_scan.id,
+            doctor_id=current_user.doctor.id,
+            comment=form.comment.data,
+            created_at=datetime.now(timezone.utc)
+        )
+        db.session.add(new_comment)
+        db.session.commit()
+        flash("Comment added successfully.", "success")
+        return redirect(url_for('image', filename=filename))
+
+    # Query all comments related to the MRI scan
+    comments = Comment.query.filter_by(mri_scan_id=mri_scan.id).all()
+
+    return render_template('comment_form.html', mri_scan=mri_scan, comments=comments, form=form)
+
+
+
+
 @app.route('/upload', methods=['GET', 'POST'])
 @login_required
 def upload():
@@ -131,8 +167,6 @@ def upload():
         mri_scan = MRIScan(
             file_name=file_name,
             diagnosis=predicted_class,
-            # patient_id=patient.id,
-            # diagnosed_by=current_user.doctor.id,
             upload_date=datetime.now(timezone.utc),
             patient=patient,
             diagnosed_by_doctor=current_user.doctor,

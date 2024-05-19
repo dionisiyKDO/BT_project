@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+
+{% block head %}
+    <title>Profile</title>  
+{% endblock %}
+
+{% block content %}
+
+<section>
+    <h1>MRI Scan: {{ mri_scan.file_name }}</h1>
+    <img src="{{ url_for('get_file', filename=mri_scan.file_name) }}" alt="MRI Scan Image: {{ mri_scan.file_name }}">
+    
+    <h2>Comments</h2>
+    <ul>
+        {% for comment in comments %}
+            <li><strong>Dr. {{ comment.doctor.first_name }} {{ comment.doctor.last_name }}:</strong> {{ comment.comment }} <em>{{ comment.created_at.strftime('%Y-%m-%d %H:%M:%S') }}</em></li>
+        {% endfor %}
+    </ul>
+
+    <h2>Add a Comment</h2>
+    <form method="POST">
+        {{ form.hidden_tag() }}
+        <div class="form-group">
+            {{ form.comment.label(class="form-control-label") }}
+            {{ form.comment(class="form-control") }}
+        </div>
+        <div class="form-group">
+            {{ form.submit(class="btn btn-primary") }}
+        </div>
+    </form>
+</section>
+{% endblock %}

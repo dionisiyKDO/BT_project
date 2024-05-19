@@ -1,5 +1,5 @@
 from flask_wtf import FlaskForm
-from wtforms import SubmitField, StringField, PasswordField, SelectField, DateField
+from wtforms import SubmitField, StringField, PasswordField, SelectField, DateField, TextAreaField
 from wtforms_sqlalchemy.fields import QuerySelectField
 from flask_wtf.file import FileField, FileRequired, FileAllowed
 from wtforms.validators import InputRequired, Length, ValidationError, Email, DataRequired, EqualTo
@@ -16,6 +16,10 @@ class UploadForm(FlaskForm):
     image   = FileField(validators=[FileAllowed(mri_scans, 'Images only!'), FileRequired('File field should not be empty!')])
     patient = QuerySelectField('Select Patient', query_factory=patient_query, allow_blank=False)
     submit  = SubmitField('Upload')
+
+class CommentForm(FlaskForm):
+    comment = TextAreaField('Comment', validators=[InputRequired()], render_kw={"rows": 4})
+    submit  = SubmitField  ('Submit')
 
 class LoginForm(FlaskForm):
     email    = StringField  ('Email',    validators=[InputRequired(), Email()],               render_kw={"placeholder": "Email"})

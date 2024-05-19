@@ -1,10 +1,10 @@
 from app import app
 from app.models import db, User, Doctor, Patient, MRIScan, Comment
 from datetime import date, datetime, timezone
-import os
+
 
 def create_database_items():
-    """
+    """ 
     Creates and initializes the database tables and adds sample data.
 
     Returns:
