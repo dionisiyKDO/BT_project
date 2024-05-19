@@ -6,27 +6,33 @@
 
 {% block content %}
 
-<section>
-    <h1>MRI Scan: {{ mri_scan.file_name }}</h1>
-    <img src="{{ url_for('get_file', filename=mri_scan.file_name) }}" alt="MRI Scan Image: {{ mri_scan.file_name }}">
+<div class="container comment-container">
+    <div class="comment-container-item comment-container-header">
+        <h2>MRI Scan: {{ mri_scan.file_name }}</h2>
+        <p>Patient: {{ mri_scan.patient }}</p>
     
-    <h2>Comments</h2>
-    <ul>
+        <img src="{{ url_for('get_file', filename=mri_scan.file_name) }}" alt="MRI Scan Image: {{ mri_scan.file_name }}">
+    </div>
+
+    <h3>Comments</h3>
+    <ul class="comment-container-item comments-list">
         {% for comment in comments %}
-            <li><strong>Dr. {{ comment.doctor.first_name }} {{ comment.doctor.last_name }}:</strong> {{ comment.comment }} <em>{{ comment.created_at.strftime('%Y-%m-%d %H:%M:%S') }}</em></li>
+            <li class="comment">
+                <div class="doctor-name">Dr. {{ comment.doctor.first_name }} {{ comment.doctor.last_name }}</div>
+                <div class="comment-date">{{ comment.created_at | formatdatetime }}</div>
+                <div class="comment-content">{{ comment.comment }}</div>
+            </li>
         {% endfor %}
     </ul>
 
-    <h2>Add a Comment</h2>
-    <form method="POST">
+    <form class="comment-container-item" method="POST">
         {{ form.hidden_tag() }}
-        <div class="form-group">
-            {{ form.comment.label(class="form-control-label") }}
-            {{ form.comment(class="form-control") }}
-        </div>
-        <div class="form-group">
-            {{ form.submit(class="btn btn-primary") }}
+
+        {{ form.comment.label }}
+        {{ form.comment }}
+
+        {{ form.submit }}
         </div>
     </form>
-</section>
+</div>
 {% endblock %}

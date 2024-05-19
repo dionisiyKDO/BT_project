@@ -1,78 +1,73 @@
 {% extends 'base.html' %}
 
 {% block head %}
-  <title>Classify</title>
+    <title>Upload</title>
+    <script>
+        function previewImage(event) {
+            var input = event.target;
+            var preview = document.getElementById('preview');
+            var previewDiv = document.getElementById('imagePreview');
+
+            if (input.files && input.files[0]) {
+                var reader = new FileReader();
+
+                reader.onload = function (e) {
+                    preview.src = e.target.result;
+                }
+
+                reader.readAsDataURL(input.files[0]);
+                previewDiv.style.display = 'flex';
+            }
+        }
+
+        function clearImage() {
+            document.getElementById('imageInput').value = "";
+            document.getElementById('imagePreview').style.display = 'none';
+        }
+
+        function handleSubmit() {
+            var submitButton = document.getElementById('submitButton');
+            submitButton.disabled = true;
+        }
+    </script>
 {% endblock %}
 
 {% block content %}
 
-<section>
-    <div class="grid">
-        <form class="grid-item" id="uploadForm" method="POST" enctype="multipart/form-data" onsubmit="handleSubmit()">
-            {{ form.hidden_tag() }}
+<div class="upload-container grid">
+    <form class="grid-item" id="uploadForm" method="POST" enctype="multipart/form-data" onsubmit="handleSubmit()">
+        {{ form.hidden_tag() }}
 
-            <h2>Upload Image</h1>
-            
-            {% for error in form.image.errors %}
-                <p style="color: red;">{{ error }}</p>
-            {% endfor %}
+        <h2>Upload Image</h2>
 
-            {{ form.patient.label }}
-            {{ form.patient() }}
-            
-            <!-- {{ form.image(id="imageInput", onchange="previewImage(event)") }}<br> -->
+        {{ form.patient.label }}
+        {{ form.patient() }}
+        
+        {{ form.image(id="imageInput", onchange="previewImage(event)") }}<br>
+        {% for error in form.image.errors %}
+            <span style="color: red;">{{ error }}</span>
+        {% endfor %}
 
-            <input type="file" id="imageInput" name="image" accept="image/*" onchange="previewImage(event)">
-            <button id="submitButton" type="submit">Submit</button>
-        </form>
+        {{ form.submit(id="submitButton") }}
+    </form>
 
-        <div class="grid-item image-container container preview" id="imagePreview" style="display: none;">
-            <div class="image-container-header">
-                <h3 class="preview-item">Selected Image:</h3>
-                <button type="submit" onclick="clearImage()">Clear Image</button>
-            </div>
-            <img class="preview-item" id="preview" src="#" alt="Selected Image">
+    <div class="grid-item image-container preview" id="imagePreview" style="display: none;">
+        <div class="image-container-header">
+            <h3 class="preview-item">Selected Image</h3>
+            <button type="submit" onclick="clearImage()">Clear Image</button>
         </div>
-
-        {% if text %}
-        <div class="grid-item image-container container">
-            <div class="image-container-header">
-                <h3>Classification Result: <strong>{{ text }}</strong></h3>
-            </div>
-            <img src="{{ file_url }}" alt="MRI_image">
-        </div>
-        {% endif %}
+        <img class="preview-item" id="preview" src="#" alt="Selected Image">
     </div>
-</section>
 
-<script>
-    function previewImage(event) {
-        var input = event.target;
-        var preview = document.getElementById('preview');
-        var previewDiv = document.getElementById('imagePreview');
+    {% if text %}
+    <div class="grid-item image-container">
+        <div class="image-container-header">
+            <h3>Classification Result: <strong>{{ text }}</strong></h3>
+        </div>
+        <img src="{{ file_url }}" alt="MRI_image">
+    </div>
+    {% endif %}
+</div>
 
-        if (input.files && input.files[0]) {
-            var reader = new FileReader();
 
-            reader.onload = function (e) {
-                preview.src = e.target.result;
-            }
-
-            reader.readAsDataURL(input.files[0]);
-            previewDiv.style.display = 'flex';
-        }
-    }
-
-    function clearImage() {
-        document.getElementById('imageInput').value = "";
-        document.getElementById('imagePreview').style.display = 'none';
-    }
-
-    function handleSubmit() {
-        var submitButton = document.getElementById('submitButton');
-        submitButton.setAttribute('aria-busy', 'true');
-        submitButton.textContent = 'Processing...';
-        submitButton.disabled = true;
-    }
-</script>
 {% endblock %}

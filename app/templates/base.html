@@ -15,24 +15,29 @@
     <header class="container">
         <nav>
             <ul>
-                <li><strong>MRI Classification</strong></li>
-                {% if current_user.is_authenticated %}
+                <li><a href="{{url_for('home')}}"><strong>MRI Classification</strong></a></li>
+                <!-- {% if current_user.is_authenticated %}
                     <li>Dr.{{ current_user.username }}</li>
-                {% endif %}
+                {% endif %} -->
             </ul>
             <ul>
-                <li><a href="{{url_for('home')}}">Home</a></li>
-                <li><a href="{{url_for('upload')}}">Upload</a></li>
+                {% if current_user.is_authenticated %}
+                    <li><a href="{{url_for('profile')}}">Profile</a></li>
+                {% endif %}
+
+                {% if current_user.is_authenticated and current_user.doctor %}
+                    <li><a href="{{url_for('upload')}}">Upload</a></li>
+                {% endif %}
+                
+                {% if current_user.is_authenticated %}
+                    <li><a href="{{url_for('logout')}}">Logout</a></li>
+                {% endif %}
                 
                 {% if not current_user.is_authenticated %}
                     <li><a href="{{url_for('login')}}">Login</a></li>
                     <li><a href="{{url_for('register')}}">Register</a></li>
                 {% endif %}
                 
-                {% if current_user.is_authenticated %}
-                <li><a href="{{url_for('profile')}}">Profile</a></li>
-                    <li><a href="{{url_for('logout')}}">Logout</a></li>
-                {% endif %}
             </ul>
         </nav>
     </header>

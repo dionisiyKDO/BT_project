@@ -44,8 +44,6 @@
             <span style="color: red;">[{{ error }}]</span>
         {% endfor %}
 
-        <br>
-        
         {{ form.email(size=32) }}
         {% for error in form.email.errors %}
             <span style="color: red;">[{{ error }}]</span>
