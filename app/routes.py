@@ -12,6 +12,7 @@ from flask_bcrypt import Bcrypt
 
 from datetime import datetime, timezone
 import os
+import pytz
 
 # Initialize extensions
 db.init_app(app)
@@ -19,6 +20,7 @@ bcrypt = Bcrypt(app)
 login_manager = LoginManager(app)
 login_manager.login_view = 'login'
 configure_uploads(app, mri_scans)
+utc_plus_3 = pytz.timezone('Etc/GMT-3')
 
 # Create database tables if they don't exist
 with app.app_context():
@@ -46,7 +48,8 @@ model = MRIImageClassifier()
 model.load_model_from_checkpoint(checkpoint_path)
 
 
-
+# General routes
+# region
 @app.route('/', methods=['GET', 'POST'])
 def index():
     return redirect(url_for('home'))
@@ -54,18 +57,6 @@ def index():
 @app.route('/home', methods=['GET', 'POST'])
 def home():
     return render_template('index.html')
-
-@app.route('/login', methods=['GET', 'POST'])
-def login():
-    form = LoginForm()
-    if form.validate_on_submit():
-        user = User.query.filter_by(email=form.email.data).first()
-        if user and check_password_hash(user.password, form.password.data):
-            login_user(user)
-            return redirect(url_for('profile'))
-        else:
-            flash('Invalid email or password', 'danger')
-    return render_template('login.html', form=form)
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
@@ -103,29 +94,36 @@ def register():
         return redirect(url_for('login'))
     return render_template('register.html', form=form)
 
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    form = LoginForm()
+    if form.validate_on_submit():
+        user = User.query.filter_by(email=form.email.data).first()
+        if user and check_password_hash(user.password, form.password.data):
+            login_user(user)
+            return redirect(url_for('profile'))
+        else:
+            flash('Invalid email or password', 'danger')
+    return render_template('login.html', form=form)
+
 @app.route('/logout', methods=['GET', 'POST'])
 @login_required
 def logout():
     logout_user()
     return redirect(url_for('home'))
+# endregion
 
-
-# @app.route('/profile', methods=['GET', 'POST'])
-# @login_required
-# def profile():
-#     if current_user.role == 'doctor':
-#         form = SearchForm()
-#         if form.validate_on_submit():
-#             search_term = form.search.data
-#             patient = Patient.query.filter(
-#                 db.or_(Patient.first_name.ilike(f'%{search_term}%'),
-#                         Patient.last_name.ilike(f'%{search_term}%'))).first()
-#             return render_template('profile_doctor.html', patients=patient)
-#         mri_scans = MRIScan.query.filter_by(diagnosed_by=current_user.doctor.id).all()
-#         return render_template('profile_doctor.html', mri_scans=mri_scans, user=current_user)
-#     else:
-#         mri_scans = MRIScan.query.filter_by(patient_id=current_user.patient.id).all()
-#         return render_template('profile_patient.html', mri_scans=mri_scans, user=current_user)
+# Profile page
+# region
+@app.route('/autocomplete', methods=['GET'])
+def autocomplete():
+    search = request.args.get('q')
+    patients = Patient.query.filter(
+        db.or_(Patient.first_name.ilike(f'%{search}%'),
+               Patient.last_name.ilike(f'%{search}%'))
+    ).all()
+    results = [{'id': patient.id, 'name': f'{patient.first_name} {patient.last_name}'} for patient in patients]
+    return jsonify(matching_results=results)
 
 @app.route('/profile', methods=['GET', 'POST'])
 @login_required
@@ -142,17 +140,6 @@ def profile():
     else:
         mri_scans = MRIScan.query.filter_by(patient_id=current_user.patient.id).all()
         return render_template('profile_patient.html', mri_scans=mri_scans, user=current_user)
-
-
-@app.route('/autocomplete', methods=['GET'])
-def autocomplete():
-    search = request.args.get('q')
-    patients = Patient.query.filter(
-        db.or_(Patient.first_name.ilike(f'%{search}%'),
-               Patient.last_name.ilike(f'%{search}%'))
-    ).all()
-    results = [{'id': patient.id, 'name': f'{patient.first_name} {patient.last_name}'} for patient in patients]
-    return jsonify(matching_results=results)
 
 @app.route('/profile/<filename>', methods=['GET', 'POST'])
 @login_required
@@ -175,7 +162,7 @@ def image(filename):
             mri_scan_id=mri_scan.id,
             doctor_id=current_user.doctor.id,
             comment=form.comment.data,
-            created_at=datetime.now(timezone.utc)
+            created_at=datetime.now(utc_plus_3)
         )
         db.session.add(new_comment)
         db.session.commit()
@@ -186,10 +173,10 @@ def image(filename):
     comments = Comment.query.filter_by(mri_scan_id=mri_scan.id).all()
 
     return render_template('comment_form.html', mri_scan=mri_scan, comments=comments, form=form)
+# endregion
 
-
-
-
+# Upload and classify MRI scans
+# region
 @app.route('/upload', methods=['GET', 'POST'])
 @login_required
 def upload():
@@ -202,7 +189,7 @@ def upload():
         mri_scan = MRIScan(
             file_name=file_name,
             diagnosis=predicted_class,
-            upload_date=datetime.now(timezone.utc),
+            upload_date=datetime.now(utc_plus_3),
             patient=patient,
             diagnosed_by_doctor=current_user.doctor,
         )
@@ -228,3 +215,4 @@ def batch_upload():
         return render_template('batch_upload.html', form=form, results=results, user=current_user)
     
     return render_template('batch_upload.html', form=form, user=current_user)
+# endregion
