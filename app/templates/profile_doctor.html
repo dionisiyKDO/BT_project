@@ -1,15 +1,26 @@
 {% extends 'base.html' %}
 
 {% block head %}
-  <title>Login</title>
+    <title>Doctor profile</title>
 {% endblock %}
 
 {% block content %}
 
 <div class="profile-container container">
-    <h2>Profile Dr. {{ current_user.username }}</h2>
-    <h3>All Images</h3>
+    <h2>Profile Dr. {{ current_user.doctor.first_name }} {{ current_user.doctor.last_name }}</h2>
     
+    <form method="POST" action="{{ url_for('profile') }}" autocomplete="off">
+        {{ form.hidden_tag() }}
+
+        {{ form.search.label }}
+        {{ form.search(id="patient-search") }}
+        <ul id="patient-list" class="suggestions-list"></ul>
+        {{ form.patient_id(id="patient-id", type="hidden") }}
+        {{ form.submit }}
+    </form>
+
+    <div class="line"></div>
+
     <div class="grid cards">
         {% for mri_scan in mri_scans %}
         <div class="cards-item">
@@ -23,4 +34,54 @@
     </div>
 </div>
 
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const searchInput = document.getElementById('patient-search');
+        const patientList = document.getElementById('patient-list');
+        const patientIdInput = document.getElementById('patient-id');
+
+        searchInput.addEventListener('input', function() {
+            const query = searchInput.value;
+            if (query.length > 0) {
+                fetch(`/autocomplete?q=${query}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        patientList.innerHTML = '';
+                        if (data.matching_results.length > 0) {
+                            data.matching_results.forEach(patient => {
+                                const li = document.createElement('li');
+                                li.className = 'suggestion-item';
+                                li.textContent = patient.name;
+                                li.dataset.id = patient.id;
+                                patientList.appendChild(li);
+                            });
+                            patientList.style.display = 'block';
+                        } else {
+                            patientList.style.display = 'none';
+                        }
+                    });
+            } else {
+                patientList.innerHTML = '';
+                patientList.style.display = 'none';
+            }
+        });
+
+        patientList.addEventListener('click', function(event) {
+            if (event.target.classList.contains('suggestion-item')) {
+                const selectedPatient = event.target;
+                searchInput.value = selectedPatient.textContent;
+                patientIdInput.value = selectedPatient.dataset.id;
+                patientList.innerHTML = '';
+                patientList.style.display = 'none';
+            }
+        });
+
+        document.addEventListener('click', function(event) {
+            if (!searchInput.contains(event.target) && !patientList.contains(event.target)) {
+                patientList.innerHTML = '';
+                patientList.style.display = 'none';
+            }
+        });
+    });
+</script>
 {% endblock %}

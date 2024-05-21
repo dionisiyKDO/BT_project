@@ -1,10 +1,10 @@
 from neural_network import MRIImageClassifier
 from app import app
 
-from app.forms import CommentForm, UploadForm, LoginForm, RegisterForm, mri_scans, BatchUploadForm
+from app.forms import CommentForm, UploadForm, LoginForm, RegisterForm, mri_scans, BatchUploadForm, SearchForm
 from app.models import db, User, Doctor, Patient, MRIScan, Comment 
 
-from flask import flash, render_template, redirect, url_for, send_from_directory
+from flask import flash, jsonify, render_template, redirect, request, url_for, send_from_directory
 from flask_login import LoginManager, login_user, login_required, logout_user, current_user
 from flask_uploads import configure_uploads
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -109,15 +109,50 @@ def logout():
     logout_user()
     return redirect(url_for('home'))
 
+
+# @app.route('/profile', methods=['GET', 'POST'])
+# @login_required
+# def profile():
+#     if current_user.role == 'doctor':
+#         form = SearchForm()
+#         if form.validate_on_submit():
+#             search_term = form.search.data
+#             patient = Patient.query.filter(
+#                 db.or_(Patient.first_name.ilike(f'%{search_term}%'),
+#                         Patient.last_name.ilike(f'%{search_term}%'))).first()
+#             return render_template('profile_doctor.html', patients=patient)
+#         mri_scans = MRIScan.query.filter_by(diagnosed_by=current_user.doctor.id).all()
+#         return render_template('profile_doctor.html', mri_scans=mri_scans, user=current_user)
+#     else:
+#         mri_scans = MRIScan.query.filter_by(patient_id=current_user.patient.id).all()
+#         return render_template('profile_patient.html', mri_scans=mri_scans, user=current_user)
+
 @app.route('/profile', methods=['GET', 'POST'])
 @login_required
 def profile():
+    form = SearchForm()
     if current_user.role == 'doctor':
-        mri_scans = MRIScan.query.filter_by(diagnosed_by=current_user.doctor.id).all()
-        return render_template('profile_doctor.html', mri_scans=mri_scans, user=current_user)
+        if form.validate_on_submit():
+            patient_id = form.patient_id.data
+            print(patient_id)
+            mri_scans = MRIScan.query.filter_by(diagnosed_by=current_user.doctor.id, patient_id=patient_id).all()
+        else:
+            mri_scans = MRIScan.query.filter_by(diagnosed_by=current_user.doctor.id).all()
+        return render_template('profile_doctor.html', mri_scans=mri_scans, user=current_user, form=form)
     else:
         mri_scans = MRIScan.query.filter_by(patient_id=current_user.patient.id).all()
         return render_template('profile_patient.html', mri_scans=mri_scans, user=current_user)
+
+
+@app.route('/autocomplete', methods=['GET'])
+def autocomplete():
+    search = request.args.get('q')
+    patients = Patient.query.filter(
+        db.or_(Patient.first_name.ilike(f'%{search}%'),
+               Patient.last_name.ilike(f'%{search}%'))
+    ).all()
+    results = [{'id': patient.id, 'name': f'{patient.first_name} {patient.last_name}'} for patient in patients]
+    return jsonify(matching_results=results)
 
 @app.route('/profile/<filename>', methods=['GET', 'POST'])
 @login_required

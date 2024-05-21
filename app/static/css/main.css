@@ -118,6 +118,34 @@ span {
 
 /* Profile */
 /* #region */
+.line {
+    border: 2px solid #1c222e;
+    border-radius: 2px;
+    margin: 1rem 0;
+}
+
+.suggestions-list {
+    position: absolute;
+    z-index: 1000;
+    margin-top: -18px;
+
+    background: var(--pico-secondary-background);
+    color: var(--pico-mark-color);    
+    border-radius: 5px;
+
+    max-height: 200px;
+    overflow-y: auto;
+    width: auto;
+    display: none;
+}
+.suggestions-list .suggestion-item {
+    padding: 10px;
+    cursor: pointer;
+}
+.suggestions-list .suggestion-item:hover {
+    background: #f0f0f0;
+}
+
 .grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
