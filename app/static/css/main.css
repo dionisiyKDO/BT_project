@@ -227,6 +227,25 @@ span {
     padding: 0;
 }
 
+.modal-content {
+    border-radius: 25px;
+}
+
+.modal-container img {
+    object-fit: cover;
+    border-radius: 1.5rem;
+
+    max-width: 300px;
+    max-height: 400px;
+
+    margin-bottom: 10px;
+}
+
+.modal-content .close-btn{
+    font-weight: bold;
+    font-size: 1.5rem;
+}
+
 .comment {
     margin-bottom: 10px;
 }
