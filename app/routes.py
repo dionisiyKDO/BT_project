@@ -173,6 +173,25 @@ def image(filename):
     comments = Comment.query.filter_by(mri_scan_id=mri_scan.id).all()
 
     return render_template('comment_form.html', mri_scan=mri_scan, comments=comments, form=form)
+
+@app.route('/delete_image', methods=['GET', 'POST'])
+@login_required
+def delete_image():
+    image_id = request.args.get('id')
+    mri_scan = MRIScan.query.filter_by(id=image_id).first()
+    if not mri_scan:
+        flash("MRI scan not found.", "danger")
+        return redirect(url_for('profile'))
+    try:
+        file_path = os.path.join(app.config['UPLOADED_IMAGES_DEST'], mri_scan.file_name)
+        os.remove(file_path)
+    except Exception as e:
+        app.logger.error(f"Error deleting file {mri_scan.file_name}: {str(e)}")
+    
+    db.session.delete(mri_scan)
+    db.session.commit()
+    flash("Image deleted successfully.", "success")
+    return redirect(url_for('profile'))
 # endregion
 
 # Upload and classify MRI scans

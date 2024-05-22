@@ -143,7 +143,8 @@ span {
     cursor: pointer;
 }
 .suggestions-list .suggestion-item:hover {
-    background: #f0f0f0;
+    color: var(--pico-secondary-background);
+    background: var(--pico-mark-color);    
 }
 
 .grid {
@@ -185,6 +186,21 @@ span {
 
 /* file comment */
 /* #region */
+.comment-container-aside {
+    background-color: #1c222e;
+    padding: 20px;
+    border-radius: 20px;
+
+    position: absolute;
+    top: 25%;
+    right: 20px;
+    width: 25%;
+    margin-left: auto;
+    margin-right: 0;
+}
+
+
+
 .comment-container {
     display: flex;
     flex-direction: column;

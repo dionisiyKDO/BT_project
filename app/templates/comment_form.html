@@ -9,10 +9,17 @@
 <div class="container comment-container">
     <div class="comment-container-item comment-container-header">
         <h2>MRI Scan: {{ mri_scan.file_name }}</h2>
-        <p>Patient: {{ mri_scan.patient }}</p>
-    
         <img src="{{ url_for('get_file', filename=mri_scan.file_name) }}" alt="MRI Scan Image: {{ mri_scan.file_name }}">
     </div>
+
+    <aside class="comment-container-aside">
+        <p><strong>First name: </strong>{{ mri_scan.patient.first_name }}</p>
+        <p><strong>Last name: </strong>{{ mri_scan.patient.last_name }}</p>
+        <p><strong>Diagnosis: </strong>{{ mri_scan.diagnosis }}</p>
+        <p><strong>Diagnosed: </strong>{{ mri_scan.upload_date | formatdatetime }}</p>
+    </aside>
+
+        
 
     <h3>Comments</h3>
     <ul class="comment-container-item comments-list">
