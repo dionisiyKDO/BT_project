@@ -125,6 +125,23 @@ def autocomplete():
     results = [{'id': patient.id, 'name': f'{patient.first_name} {patient.last_name}'} for patient in patients]
     return jsonify(matching_results=results)
 
+@app.route('/mri_scans/<int:mri_scan_id>/comments', methods=['GET'])
+def get_comments(mri_scan_id):
+    mri_scan = MRIScan.query.get_or_404(mri_scan_id)
+    comments = []
+
+    for comment in mri_scan.comments:
+        doctor = Doctor.query.filter_by(id=comment.doctor_id).first()
+        comment_data = {
+            'id': comment.id,
+            'doctor': doctor.first_name + ' ' + doctor.last_name, 
+            'comment': comment.comment,
+            'created_at': comment.created_at.strftime('%Y-%m-%d %H:%M:%S'),
+        }
+        comments.append(comment_data)
+
+    return jsonify(comments)
+
 @app.route('/profile', methods=['GET', 'POST'])
 @login_required
 def profile():

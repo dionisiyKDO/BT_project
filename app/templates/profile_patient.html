@@ -16,11 +16,88 @@
             <img src="{{ url_for('get_file', filename=mri_scan.file_name) }}" alt="{{ mri_scan.file_name }}">
             <p>Diagnosis: {{ mri_scan.diagnosis }}</p>
             <p>Uploaded: <br>{{ mri_scan.upload_date  | formatdatetime }}</p>
-            <a href="{{ url_for('image', filename=mri_scan.file_name) }}" class="btn">AddComment</a>
+            {% if mri_scan.comments %}
+                <a href="#" class="btn view-details-btn" data-image="{{ url_for('get_file', filename=mri_scan.file_name) }}" data-comments="{{ url_for('get_comments', mri_scan_id=mri_scan.id) }}">View Details</a>
+            {% else %}
+                <p style="color: red;">No Comment</p>
+            {% endif %}
         </div>
         {% endfor %}
     </div>
 
+    <!-- HTML structure for the modal -->
+    <div id="modal-container" class="modal-container">
+        <div class="modal-content">
+            <span class="close-btn" onclick="closeModal()">&times;</span>
+            <img id="modal-image" src="#" alt="MRI Scan Image">
+            <ul id="modal-comments-list"></ul>
+        </div>
+    </div>
+
 </div>
+
+<script>
+    // JavaScript to handle opening and closing the modal
+    document.addEventListener('DOMContentLoaded', function() {
+        const viewDetailsButtons = document.querySelectorAll('.view-details-btn');
+
+        viewDetailsButtons.forEach(button => {
+            button.addEventListener('click', function(event) {
+                event.preventDefault();
+                const imageSrc = this.getAttribute('data-image');
+                const commentsUrl = this.getAttribute('data-comments');
+                fetch(commentsUrl)
+                    .then(response => response.json())
+                    .then(comments => {
+                        console.log(comments);
+                        openModal(imageSrc, comments);
+                    })
+                    .catch(error => {
+                        console.error('Error fetching comments:', error);
+                    });
+            });
+        });
+    });
+
+    function openModal(imageSrc, comments) {
+        const modalContainer = document.getElementById('modal-container');
+        const modalImage = document.getElementById('modal-image');
+        const modalCommentsList = document.getElementById('modal-comments-list');
+
+        modalImage.src = imageSrc;
+        modalCommentsList.innerHTML = '';
+
+        comments.forEach(function(comment) {
+            var listItem = document.createElement("li");
+            listItem.classList.add("comment");
+        
+            var commentInfo = document.createElement("span");
+            commentInfo.classList.add("comment-info");
+            commentInfo.textContent = "Doctor ID: " + comment.doctor;
+            listItem.appendChild(commentInfo);
+            listItem.appendChild(document.createElement("br"));
+
+            var created_at = document.createElement("span");
+            created_at.classList.add("comment-created-at");
+            created_at.textContent = "Created at: " + comment.created_at;
+            listItem.appendChild(created_at);
+            listItem.appendChild(document.createElement("br"));
+
+            var commentText = document.createElement("span");
+            commentText.classList.add("comment-text");
+            commentText.textContent = comment.comment;
+            listItem.appendChild(commentText);
+        
+            modalCommentsList.appendChild(listItem);
+        });
+        
+        modalContainer.style.display = 'block';
+    }
+
+    function closeModal() {
+        const modalContainer = document.getElementById('modal-container');
+        modalContainer.style.display = 'none';
+    }
+</script>
 
 {% endblock %}
