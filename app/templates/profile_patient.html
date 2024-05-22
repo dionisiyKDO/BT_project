@@ -7,7 +7,7 @@
 {% block content %}
 
 <div class="profile-container container">
-    <h1>Profile Patient. {{ current_user.username }}</h1>
+    <h1>Profile Patient. {{ current_user.patient.first_name }} {{ current_user.patient.last_name }} </h1>
     <h2>All Images</h2>
     
     <div class="grid cards">
@@ -16,7 +16,7 @@
             <img src="{{ url_for('get_file', filename=mri_scan.file_name) }}" alt="{{ mri_scan.file_name }}">
             <p>Diagnosis: {{ mri_scan.diagnosis }}</p>
             <p>Uploaded: <br>{{ mri_scan.upload_date  | formatdatetime }}</p>
-            <!-- <a href="{{ url_for('image', filename=mri_scan.file_name) }}" class="btn">AddComment</a> -->
+            <a href="{{ url_for('image', filename=mri_scan.file_name) }}" class="btn">AddComment</a>
         </div>
         {% endfor %}
     </div>

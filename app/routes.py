@@ -132,7 +132,6 @@ def profile():
     if current_user.role == 'doctor':
         if form.validate_on_submit():
             patient_id = form.patient_id.data
-            print(patient_id)
             mri_scans = MRIScan.query.filter_by(diagnosed_by=current_user.doctor.id, patient_id=patient_id).all()
         else:
             mri_scans = MRIScan.query.filter_by(diagnosed_by=current_user.doctor.id).all()
@@ -144,35 +143,36 @@ def profile():
 @app.route('/profile/<filename>', methods=['GET', 'POST'])
 @login_required
 def image(filename):
-    # return render_template('profile_patient.html', mri_scans=mri_scans, user=current_user)
+    if current_user.role == 'doctor':
+        if not current_user.is_authenticated or current_user.role != 'doctor':
+            flash("Access denied.", "danger")
+            return redirect(url_for('index'))
 
-    if not current_user.is_authenticated or current_user.role != 'doctor':
-        flash("Access denied.", "danger")
-        return redirect(url_for('index'))
+        # Query the MRI scan by filename
+        mri_scan = MRIScan.query.filter_by(file_name=filename).first()
+        if not mri_scan:
+            flash("MRI scan not found.", "danger")
+            return redirect(url_for('profile'))
 
-    # Query the MRI scan by filename
-    mri_scan = MRIScan.query.filter_by(file_name=filename).first()
-    if not mri_scan:
-        flash("MRI scan not found.", "danger")
-        return redirect(url_for('profile'))
+        form = CommentForm()
+        if form.validate_on_submit():
+            new_comment = Comment(
+                mri_scan_id=mri_scan.id,
+                doctor_id=current_user.doctor.id,
+                comment=form.comment.data,
+                created_at=datetime.now(utc_plus_3)
+            )
+            db.session.add(new_comment)
+            db.session.commit()
+            flash("Comment added successfully.", "success")
+            return redirect(url_for('image', filename=filename))
 
-    form = CommentForm()
-    if form.validate_on_submit():
-        new_comment = Comment(
-            mri_scan_id=mri_scan.id,
-            doctor_id=current_user.doctor.id,
-            comment=form.comment.data,
-            created_at=datetime.now(utc_plus_3)
-        )
-        db.session.add(new_comment)
-        db.session.commit()
-        flash("Comment added successfully.", "success")
-        return redirect(url_for('image', filename=filename))
+        # Query all comments related to the MRI scan
+        comments = Comment.query.filter_by(mri_scan_id=mri_scan.id).all()
 
-    # Query all comments related to the MRI scan
-    comments = Comment.query.filter_by(mri_scan_id=mri_scan.id).all()
-
-    return render_template('comment_form.html', mri_scan=mri_scan, comments=comments, form=form)
+        return render_template('comment_form.html', mri_scan=mri_scan, comments=comments, form=form)
+    else:
+        redirect(url_for('profile'))
 
 @app.route('/delete_image', methods=['GET', 'POST'])
 @login_required
@@ -202,8 +202,8 @@ def upload():
     form = UploadForm()
     if form.validate_on_submit():
         file_name = mri_scans.save(form.image.data)
-        patient = form.patient.data
         file_url = url_for('get_file', filename=file_name)
+        patient = Patient.query.filter_by(id=form.patient_id.data).first()
         predicted_class = model.classify_image(os.path.join(app.config['UPLOADED_IMAGES_DEST'], file_name))
         mri_scan = MRIScan(
             file_name=file_name,

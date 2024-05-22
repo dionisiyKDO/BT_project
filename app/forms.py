@@ -13,9 +13,10 @@ def patient_query():
     return Patient.query
 
 class UploadForm(FlaskForm):
-    image   = FileField('Upload Image', validators=[FileAllowed(mri_scans, 'Images only!'), FileRequired('File field should not be empty!')])
-    patient = QuerySelectField('Select Patient', query_factory=patient_query, allow_blank=False)
-    submit  = SubmitField('Upload')
+    image       = FileField('Upload Image', validators=[FileAllowed(mri_scans, 'Images only!'), FileRequired('File field should not be empty!')])
+    search      = StringField('Search Patient', validators=[InputRequired()])
+    patient_id  = StringField('Patient ID',     validators=[InputRequired()])
+    submit      = SubmitField('Upload')
 
 class BatchUploadForm(FlaskForm):
     images = MultipleFileField('Upload Images', validators=[FileAllowed(mri_scans, 'Images only!'), FileRequired('File field should not be empty!')])
