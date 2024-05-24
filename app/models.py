@@ -23,7 +23,7 @@ class User(db.Model, UserMixin):
     username   = db.Column(db.String(100), nullable=False, unique=True)
     password   = db.Column(db.String(100), nullable=False)
 
-    role       = db.Column(db.Enum('doctor', 'patient', name='user_roles'), nullable=False)
+    role       = db.Column(db.Enum('admin', 'doctor', 'patient', name='user_roles'), nullable=False)
     created_at = db.Column(db.DateTime(timezone=True), nullable=False, default=datetime.now(timezone.utc))
 
     doctor     = db.relationship('Doctor',  back_populates='user', uselist=False)

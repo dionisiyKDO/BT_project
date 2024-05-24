@@ -16,9 +16,13 @@
             <img src="{{ url_for('get_file', filename=mri_scan.file_name) }}" alt="{{ mri_scan.file_name }}">
             <p>Uploaded: <br>{{ mri_scan.upload_date  | formatdatetime }}</p>
             {% if mri_scan.comments %}
-                <a href="#" class="btn view-details-btn" data-image="{{ url_for('get_file', filename=mri_scan.file_name) }}" data-comments="{{ url_for('get_comments', mri_scan_id=mri_scan.id) }}" data-diagnosis="{{ mri_scan.diagnosis }}">View Details</a>
+                <a href="#" class="btn view-details-btn" 
+                    data-image="{{ url_for('get_file', filename=mri_scan.file_name) }}" 
+                    data-comments="{{ url_for('get_comments', mri_scan_id=mri_scan.id) }}" 
+                    data-diagnosis="{{ mri_scan.diagnosis }}"
+                    >View doctor's conclusion</a>
             {% else %}
-                <p style="color: red;">No Comment</p>
+                <p style="color: red;">No doctor's conclusion</p>
             {% endif %}
         </div>
         {% endfor %}

@@ -28,7 +28,7 @@
             <p>Patient: {{ mri_scan.patient.first_name }} {{ mri_scan.patient.last_name }}</p>
             <p>Diagnosis: {{ mri_scan.diagnosis }}</p>
             <p>Diagnosed: <br>{{ mri_scan.upload_date | formatdatetime }}</p>
-            <a href="{{ url_for('image', filename=mri_scan.file_name) }}" class="btn">AddComment</a>
+            <a href="{{ url_for('image', filename=mri_scan.file_name) }}" class="btn">Write Conclusion</a>
             <a href="#" class="btn delete-btn" data-id="{{ mri_scan.id }}">Delete</a>
         </div>
         {% endfor %}

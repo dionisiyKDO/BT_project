@@ -2,22 +2,6 @@
 
 {% block head %}
     <title>Login</title>
-    <script>
-        function toggleFields() {
-            const role = document.getElementById('role').value;
-            const doctorFields = document.getElementById('doctorFields');
-
-            if (role === 'doctor') {
-                doctorFields.style.display = 'block';
-            } else if (role === 'patient') {
-                doctorFields.style.display = 'none';
-            } else {
-                doctorFields.style.display = 'none';
-            }
-        }
-
-        window.onload = toggleFields;
-    </script>
 {% endblock %}
 
 {% block content %}
@@ -35,6 +19,11 @@
 
         {{ form.last_name(size=32) }}<br>
         {% for error in form.last_name.errors %}
+            <span style="color: red;">[{{ error }}]</span>
+        {% endfor %}
+
+        {{ form.specialty(size=32) }}<br>
+        {% for error in form.specialty.errors %}
             <span style="color: red;">[{{ error }}]</span>
         {% endfor %}
 
@@ -64,36 +53,9 @@
             <span style="color: red;">[{{ error }}]</span>
         {% endfor %}
 
-        {{ form.role(id="role", onchange="toggleFields()") }}<br>
-        {% for error in form.role.errors %}
-            <span style="color: red;">[{{ error }}]</span>
-        {% endfor %}
-
-        <br>    
-
-        <div id="doctorFields">
-            {{ form.specialty(size=32) }}<br>
-            {% for error in form.specialty.errors %}
-                <span style="color: red;">[{{ error }}]</span>
-            {% endfor %}
-        </div>
+        <br>
 
         <p>{{ form.submit() }}</p>
-
-
-
-
-        <!-- {{ form.username }}
-        {% for error in form.username.errors %}
-            <p style="color: red;">{{ error }}</p>
-        {% endfor %}
-
-        {{ form.password }}
-        {% for error in form.password.errors %}
-            <p style="color: red;">{{ error }}</p>
-        {% endfor %}
-
-        {{ form.submit }} -->
     </form>
 
 </div>

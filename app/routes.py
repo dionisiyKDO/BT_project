@@ -1,7 +1,7 @@
 from neural_network import MRIImageClassifier
 from app import app
 
-from app.forms import CommentForm, UploadForm, LoginForm, RegisterForm, mri_scans, BatchUploadForm, SearchForm
+from app.forms import CommentForm, UploadForm, LoginForm, RegisterDoctorForm, RegisterPatientForm, mri_scans, BatchUploadForm, SearchForm
 from app.models import db, User, Doctor, Patient, MRIScan, Comment 
 
 from flask import flash, jsonify, render_template, redirect, request, url_for, send_from_directory
@@ -22,11 +22,6 @@ login_manager.login_view = 'login'
 configure_uploads(app, mri_scans)
 utc_plus_3 = pytz.timezone('Etc/GMT-3')
 
-# Create database tables if they don't exist
-with app.app_context():
-    db.create_all()
-
-
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))
@@ -45,11 +40,33 @@ def format_datetime(value, format='%d %B %Y %H:%M'):
         return ""
     return value.strftime(format)
 
+def create_admin_user():
+    admin_email = 'admin'
+    admin_username = 'admin'
+    admin_password = 'admin'
+    admin_role = 'admin'
+
+    existing_admin = User.query.filter_by(email=admin_email).first()
+    if not existing_admin:
+        admin_user = User(
+            email=admin_email,
+            username=admin_username,
+            password=admin_password,
+            role=admin_role
+        )
+        db.session.add(admin_user)
+        db.session.commit()
+        print("Admin user created.")
+
 # Load the model
 checkpoint_path = './checkpoints/OwnV2.epoch36-val_acc0.9922.hdf5'
 model = MRIImageClassifier()
 model.load_model_from_checkpoint(checkpoint_path)
 
+# Create database tables if they don't exist
+with app.app_context():
+    db.create_all()
+    create_admin_user()
 
 # General routes
 # region
@@ -62,8 +79,8 @@ def home():
     return render_template('index.html')
 
 @app.route('/register', methods=['GET', 'POST'])
-def register():
-    form = RegisterForm()
+def register_patient():
+    form = RegisterPatientForm()
     if form.validate_on_submit():
         try:
             hashed_password = generate_password_hash(form.password.data)
@@ -71,28 +88,17 @@ def register():
                 email=form.email.data,
                 username=form.username.data,
                 password=hashed_password,
-                role=form.role.data
+                role='patient'
             )
             db.session.add(user)
             db.session.commit()
-
-            if form.role.data == 'doctor':
-                doctor = Doctor(
-                    user_id=user.id,
-                    first_name=form.first_name.data,
-                    last_name=form.last_name.data,
-                    birth_date=form.birth_date.data,
-                    specialty=form.specialty.data
-                )
-                db.session.add(doctor)
-            else:
-                patient = Patient(
-                    user_id=user.id,
-                    first_name=form.first_name.data,
-                    last_name=form.last_name.data,
-                    birth_date=form.birth_date.data
-                )
-                db.session.add(patient)
+            patient = Patient(
+                user_id=user.id,
+                first_name=form.first_name.data,
+                last_name=form.last_name.data,
+                birth_date=form.birth_date.data
+            )
+            db.session.add(patient)
             db.session.commit()
             flash('Registration successful. Please log in.', 'success')
             return redirect(url_for('login'))
@@ -100,18 +106,23 @@ def register():
             db.session.rollback()
             app.logger.error(f"Error during registration: {str(e)}")
             flash('Registration failed. Please try again.', 'danger')
-    return render_template('register.html', form=form)
+    return render_template('register_patient.html', form=form)
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     form = LoginForm()
     if form.validate_on_submit():
         user = User.query.filter_by(email=form.email.data).first()
-        if user and check_password_hash(user.password, form.password.data):
+        if user and user.role == 'admin':
+            print('admin')
             login_user(user)
-            return redirect(url_for('profile'))
+            return redirect(url_for('admin_profile'))
         else:
-            flash('Invalid email or password', 'danger')
+            if user and check_password_hash(user.password, form.password.data):
+                login_user(user)
+                return redirect(url_for('profile'))
+            else:
+                flash('Invalid email or password', 'danger')
     return render_template('login.html', form=form)
 
 @app.route('/logout', methods=['GET', 'POST'])
@@ -270,4 +281,62 @@ def batch_upload():
         flash('Images uploaded and classified successfully!', 'success')
         return render_template('batch_upload.html', form=form, results=results, user=current_user)
     return render_template('batch_upload.html', form=form, user=current_user)
+# endregion
+
+# admin
+# region
+@app.route('/admin')
+@login_required
+def admin_profile():
+    print('here' + current_user.role)
+    if current_user.role != 'admin':
+        flash('Access unauthorized!', 'danger')
+        return redirect(url_for('index'))
+    return render_template('admin_profile.html')
+
+@app.route('/admin/train')
+@login_required
+def initiate_training():
+    if current_user.role != 'admin':
+        flash('Access unauthorized!', 'danger')
+        return redirect(url_for('index'))
+    # Here you can add the logic to initiate TensorFlow training
+    flash('Neural network training initiated.', 'success')
+    return redirect(url_for('admin_profile'))
+
+@app.route('/admin/register_doctor', methods=['GET', 'POST'])
+@login_required
+def register_doctor():
+    if current_user.role != 'admin':
+        flash('Access unauthorized!', 'danger')
+        return redirect(url_for('index'))
+
+    form = RegisterDoctorForm()
+    if form.validate_on_submit():
+        try:
+            hashed_password = generate_password_hash(form.password.data)
+            user = User(
+                email=form.email.data,
+                username=form.username.data,
+                password=hashed_password,
+                role='doctor'
+            )
+            db.session.add(user)
+            db.session.commit()
+            doctor = Doctor(
+                user_id=user.id,
+                first_name=form.first_name.data,
+                last_name=form.last_name.data,
+                specialty=form.specialty.data,
+                birth_date=form.birth_date.data
+            )
+            db.session.add(doctor)
+            db.session.commit()
+            flash('Doctor registered successfully', 'success')
+            return redirect(url_for('admin_profile'))
+        except Exception as e:
+            db.session.rollback()
+            app.logger.error(f"Error during registration: {str(e)}")
+            flash('Registration failed. Please try again.', 'danger')
+    return render_template('register_doctor.html', form=form)   
 # endregion

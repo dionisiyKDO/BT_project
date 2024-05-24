@@ -1,0 +1,73 @@
+{% extends 'base.html' %}
+
+{% block head %}
+    <title>Login</title>
+{% endblock %}
+
+{% block content %}
+
+<div class="container registerform">
+    <form id="registerForm" method="POST">
+        {{ form.hidden_tag() }}
+
+        <h2>Register Form</h1>
+
+        {{ form.first_name(size=32) }}<br>
+        {% for error in form.first_name.errors %}
+            <span style="color: red;">[{{ error }}]</span>
+        {% endfor %}
+
+        {{ form.last_name(size=32) }}<br>
+        {% for error in form.last_name.errors %}
+            <span style="color: red;">[{{ error }}]</span>
+        {% endfor %}
+
+        {{ form.birth_date.label }}
+        {{ form.birth_date() }}<br>
+        {% for error in form.birth_date.errors %}
+            <span style="color: red;">[{{ error }}]</span>
+        {% endfor %}
+
+        {{ form.email(size=32) }}
+        {% for error in form.email.errors %}
+            <span style="color: red;">[{{ error }}]</span>
+        {% endfor %}
+
+        {{ form.username(size=32) }}
+        {% for error in form.username.errors %}
+            <span style="color: red;">[{{ error }}]</span>
+        {% endfor %}
+
+        {{ form.password(size=32) }}<br>
+        {% for error in form.password.errors %}
+            <span style="color: red;">[{{ error }}]</span>
+        {% endfor %}
+
+        {{ form.confirm_password(size=32) }}<br>
+        {% for error in form.confirm_password.errors %}
+            <span style="color: red;">[{{ error }}]</span>
+        {% endfor %}
+
+        <br>
+
+        <p>{{ form.submit() }}</p>
+
+
+
+
+        <!-- {{ form.username }}
+        {% for error in form.username.errors %}
+            <p style="color: red;">{{ error }}</p>
+        {% endfor %}
+
+        {{ form.password }}
+        {% for error in form.password.errors %}
+            <p style="color: red;">{{ error }}</p>
+        {% endfor %}
+
+        {{ form.submit }} -->
+    </form>
+
+</div>
+
+{% endblock %}

@@ -177,8 +177,8 @@ span {
     clip-path: inset(2px 9px 2px 9px);
 }
 .cards-item .btn {
-    padding: 5px 10px;
-    margin-top: 5px;
+    display: block;
+    padding: 5px 5px;
     font-weight: bold;
     text-decoration: none;
 }
