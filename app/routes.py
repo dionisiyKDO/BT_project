@@ -33,11 +33,14 @@ def load_user(user_id):
 
 @app.route('/uploads/<filename>', methods=['GET', 'POST'])
 def get_file(filename):
-    return send_from_directory(app.config['UPLOADED_IMAGES_DEST'], filename)
-    
+    try:
+        return send_from_directory(app.config['UPLOADED_IMAGES_DEST'], filename)
+    except Exception as e:
+        app.logger.error(f"Error sending file {filename}: {str(e)}")
+        return redirect(url_for('home'))
+
 @app.template_filter('formatdatetime')
 def format_datetime(value, format='%d %B %Y %H:%M'):
-    """Format a date time to (HH:MM dd BBBB YYYY) format."""
     if value is None:
         return ""
     return value.strftime(format)
@@ -62,36 +65,41 @@ def home():
 def register():
     form = RegisterForm()
     if form.validate_on_submit():
-        hashed_password = generate_password_hash(form.password.data)
-        user = User(
-            email=form.email.data,
-            username=form.username.data,
-            password=hashed_password,
-            role=form.role.data
-        )
-        db.session.add(user)
-        db.session.commit()
+        try:
+            hashed_password = generate_password_hash(form.password.data)
+            user = User(
+                email=form.email.data,
+                username=form.username.data,
+                password=hashed_password,
+                role=form.role.data
+            )
+            db.session.add(user)
+            db.session.commit()
 
-        if form.role.data == 'doctor':
-            doctor = Doctor(
-                user_id=user.id,
-                first_name=form.first_name.data,
-                last_name=form.last_name.data,
-                birth_date=form.birth_date.data,
-                specialty=form.specialty.data
-            )
-            db.session.add(doctor)
-        else:
-            patient = Patient(
-                user_id=user.id,
-                first_name=form.first_name.data,
-                last_name=form.last_name.data,
-                birth_date=form.birth_date.data
-            )
-            db.session.add(patient)
-        db.session.commit()
-        flash('Registration successful. Please log in.', 'success')
-        return redirect(url_for('login'))
+            if form.role.data == 'doctor':
+                doctor = Doctor(
+                    user_id=user.id,
+                    first_name=form.first_name.data,
+                    last_name=form.last_name.data,
+                    birth_date=form.birth_date.data,
+                    specialty=form.specialty.data
+                )
+                db.session.add(doctor)
+            else:
+                patient = Patient(
+                    user_id=user.id,
+                    first_name=form.first_name.data,
+                    last_name=form.last_name.data,
+                    birth_date=form.birth_date.data
+                )
+                db.session.add(patient)
+            db.session.commit()
+            flash('Registration successful. Please log in.', 'success')
+            return redirect(url_for('login'))
+        except Exception as e:
+            db.session.rollback()
+            app.logger.error(f"Error during registration: {str(e)}")
+            flash('Registration failed. Please try again.', 'danger')
     return render_template('register.html', form=form)
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -129,7 +137,6 @@ def autocomplete():
 def get_comments(mri_scan_id):
     mri_scan = MRIScan.query.get_or_404(mri_scan_id)
     comments = []
-
     for comment in mri_scan.comments:
         doctor = Doctor.query.filter_by(id=comment.doctor_id).first()
         comment_data = {
@@ -139,7 +146,6 @@ def get_comments(mri_scan_id):
             'created_at': comment.created_at.strftime('%Y-%m-%d %H:%M:%S'),
         }
         comments.append(comment_data)
-
     return jsonify(comments)
 
 @app.route('/profile', methods=['GET', 'POST'])
@@ -173,20 +179,24 @@ def image(filename):
 
         form = CommentForm()
         if form.validate_on_submit():
-            new_comment = Comment(
-                mri_scan_id=mri_scan.id,
-                doctor_id=current_user.doctor.id,
-                comment=form.comment.data,
-                created_at=datetime.now(utc_plus_3)
-            )
-            db.session.add(new_comment)
-            db.session.commit()
-            flash("Comment added successfully.", "success")
-            return redirect(url_for('image', filename=filename))
+            try:
+                new_comment = Comment(
+                    mri_scan_id=mri_scan.id,
+                    doctor_id=current_user.doctor.id,
+                    comment=form.comment.data,
+                    created_at=datetime.now(utc_plus_3)
+                )
+                db.session.add(new_comment)
+                db.session.commit()
+                flash("Comment added successfully.", "success")
+                return redirect(url_for('image', filename=filename))
+            except Exception as e:
+                db.session.rollback()
+                app.logger.error(f"Error adding comment: {str(e)}")
+                flash("Failed to add comment. Please try again.", "danger")
 
         # Query all comments related to the MRI scan
         comments = Comment.query.filter_by(mri_scan_id=mri_scan.id).all()
-
         return render_template('comment_form.html', mri_scan=mri_scan, comments=comments, form=form)
     else:
         redirect(url_for('profile'))
@@ -202,12 +212,13 @@ def delete_image():
     try:
         file_path = os.path.join(app.config['UPLOADED_IMAGES_DEST'], mri_scan.file_name)
         os.remove(file_path)
+        db.session.delete(mri_scan)
+        db.session.commit()
+        flash("Image deleted successfully.", "success")
     except Exception as e:
+        db.session.rollback()
         app.logger.error(f"Error deleting file {mri_scan.file_name}: {str(e)}")
-    
-    db.session.delete(mri_scan)
-    db.session.commit()
-    flash("Image deleted successfully.", "success")
+        flash("Failed to delete image. Please try again.", "danger")
     return redirect(url_for('profile'))
 # endregion
 
@@ -218,21 +229,26 @@ def delete_image():
 def upload():
     form = UploadForm()
     if form.validate_on_submit():
-        file_name = mri_scans.save(form.image.data)
-        file_url = url_for('get_file', filename=file_name)
-        patient = Patient.query.filter_by(id=form.patient_id.data).first()
-        predicted_class = model.classify_image(os.path.join(app.config['UPLOADED_IMAGES_DEST'], file_name))
-        mri_scan = MRIScan(
-            file_name=file_name,
-            diagnosis=predicted_class,
-            upload_date=datetime.now(utc_plus_3),
-            patient=patient,
-            diagnosed_by_doctor=current_user.doctor,
-        )
-        db.session.add(mri_scan)
-        db.session.commit()
-        flash('Image uploaded and classified successfully!', 'success')
-        return render_template('upload.html', form=form, text=predicted_class, file_url=file_url, user=current_user)
+        try:
+            file_name = mri_scans.save(form.image.data)
+            file_url = url_for('get_file', filename=file_name)
+            patient = Patient.query.filter_by(id=form.patient_id.data).first()
+            predicted_class = model.classify_image(os.path.join(app.config['UPLOADED_IMAGES_DEST'], file_name))
+            mri_scan = MRIScan(
+                file_name=file_name,
+                diagnosis=predicted_class,
+                upload_date=datetime.now(utc_plus_3),
+                patient=patient,
+                diagnosed_by_doctor=current_user.doctor,
+            )
+            db.session.add(mri_scan)
+            db.session.commit()
+            flash('Image uploaded and classified successfully!', 'success')
+            return render_template('upload.html', form=form, text=predicted_class, file_url=file_url, user=current_user)
+        except Exception as e:
+            db.session.rollback()
+            app.logger.error(f"Error uploading image: {str(e)}")
+            flash("Failed to upload image. Please try again.", "danger")
     return render_template('upload.html', form=form, user=current_user)
 
 @app.route('/batch_upload', methods=['GET', 'POST'])
@@ -244,11 +260,14 @@ def batch_upload():
         results = []
         for uploaded_file in uploaded_files:
             if uploaded_file:
-                file_name = mri_scans.save(uploaded_file)
-                predicted_class = model.classify_image(os.path.join(app.config['UPLOADED_IMAGES_DEST'], file_name))
-                results.append((file_name, predicted_class))
+                try:
+                    file_name = mri_scans.save(uploaded_file)
+                    predicted_class = model.classify_image(os.path.join(app.config['UPLOADED_IMAGES_DEST'], file_name))
+                    results.append((file_name, predicted_class))
+                except Exception as e:
+                    app.logger.error(f"Error during batch upload: {str(e)}")
+                    flash("Failed to upload some images. Please try again.", "danger")
         flash('Images uploaded and classified successfully!', 'success')
         return render_template('batch_upload.html', form=form, results=results, user=current_user)
-    
     return render_template('batch_upload.html', form=form, user=current_user)
 # endregion

@@ -14,10 +14,9 @@
         {% for mri_scan in mri_scans %}
         <div class="cards-item">
             <img src="{{ url_for('get_file', filename=mri_scan.file_name) }}" alt="{{ mri_scan.file_name }}">
-            <p>Diagnosis: {{ mri_scan.diagnosis }}</p>
             <p>Uploaded: <br>{{ mri_scan.upload_date  | formatdatetime }}</p>
             {% if mri_scan.comments %}
-                <a href="#" class="btn view-details-btn" data-image="{{ url_for('get_file', filename=mri_scan.file_name) }}" data-comments="{{ url_for('get_comments', mri_scan_id=mri_scan.id) }}">View Details</a>
+                <a href="#" class="btn view-details-btn" data-image="{{ url_for('get_file', filename=mri_scan.file_name) }}" data-comments="{{ url_for('get_comments', mri_scan_id=mri_scan.id) }}" data-diagnosis="{{ mri_scan.diagnosis }}">View Details</a>
             {% else %}
                 <p style="color: red;">No Comment</p>
             {% endif %}
@@ -30,6 +29,7 @@
         <div class="modal-content">
             <span class="close-btn" onclick="closeModal()">&times;</span>
             <img id="modal-image" src="#" alt="MRI Scan Image">
+            <p>Diagnosis: <span id="modal-diagnosis"></span></p>
             <ul id="modal-comments-list"></ul>
         </div>
     </div>
@@ -46,11 +46,12 @@
                 event.preventDefault();
                 const imageSrc = this.getAttribute('data-image');
                 const commentsUrl = this.getAttribute('data-comments');
+                const diagnosis = this.getAttribute('data-diagnosis');
                 fetch(commentsUrl)
                     .then(response => response.json())
                     .then(comments => {
                         console.log(comments);
-                        openModal(imageSrc, comments);
+                        openModal(imageSrc, comments, diagnosis);
                     })
                     .catch(error => {
                         console.error('Error fetching comments:', error);
@@ -59,13 +60,16 @@
         });
     });
 
-    function openModal(imageSrc, comments) {
+    function openModal(imageSrc, comments, diagnosis) {
         const modalContainer = document.getElementById('modal-container');
         const modalImage = document.getElementById('modal-image');
         const modalCommentsList = document.getElementById('modal-comments-list');
+        const modalDiagnosis = document.getElementById('modal-diagnosis');
+
 
         modalImage.src = imageSrc;
         modalCommentsList.innerHTML = '';
+        modalDiagnosis.textContent = diagnosis;
 
         comments.forEach(function(comment) {
             var listItem = document.createElement("li");
