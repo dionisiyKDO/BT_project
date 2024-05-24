@@ -27,8 +27,8 @@ class SearchForm(FlaskForm):
     patient_id  = StringField('Patient ID',     validators=[InputRequired()])
     submit      = SubmitField('Search')
 
-class CommentForm(FlaskForm):
-    comment = TextAreaField('Conclusion', validators=[InputRequired()], render_kw={"rows": 4})
+class ConclusionForm(FlaskForm):
+    conclusion = TextAreaField('Conclusion', validators=[InputRequired()], render_kw={"rows": 4})
     submit  = SubmitField  ('Submit')
 
 

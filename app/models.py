@@ -43,7 +43,7 @@ class Doctor(db.Model):
 
     user       = db.relationship('User',    back_populates='doctor')
     mri_scans  = db.relationship('MRIScan', back_populates='diagnosed_by_doctor')
-    comments   = db.relationship('Comment', back_populates='doctor')
+    conclusions   = db.relationship('Conclusion', back_populates='doctor')
 
 class Patient(db.Model):
     __tablename__ = 'patients'
@@ -75,19 +75,19 @@ class MRIScan(db.Model):
     diagnosis    = db.Column(db.String(255), nullable=False)
     diagnosed_by = db.Column(db.Integer, db.ForeignKey('doctors.id'))
 
-    comments            = db.relationship('Comment', back_populates='mri_scan')
+    conclusions            = db.relationship('Conclusion', back_populates='mri_scan')
     patient             = db.relationship('Patient', back_populates='mri_scans')
     diagnosed_by_doctor = db.relationship('Doctor',  back_populates='mri_scans')
 
-class Comment(db.Model):
-    __tablename__ = 'comments'
+class Conclusion(db.Model):
+    __tablename__ = 'conclusions'
 
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     mri_scan_id = db.Column(db.Integer, db.ForeignKey('mri_scans.id'), nullable=False)
 
     doctor_id  = db.Column(db.Integer, db.ForeignKey('doctors.id'), nullable=False)
-    comment    = db.Column(db.Text, nullable=False)
+    conclusion = db.Column(db.Text, nullable=False)
     created_at = db.Column(db.DateTime(timezone=True), nullable=False, default=datetime.now(timezone.utc))
 
-    mri_scan   = db.relationship('MRIScan', back_populates='comments')
-    doctor     = db.relationship('Doctor',  back_populates='comments')
+    mri_scan   = db.relationship('MRIScan', back_populates='conclusions')
+    doctor     = db.relationship('Doctor',  back_populates='conclusions')

@@ -1,8 +1,8 @@
 from neural_network import MRIImageClassifier
 from app import app
 
-from app.forms import CommentForm, UploadForm, LoginForm, RegisterDoctorForm, RegisterPatientForm, mri_scans, BatchUploadForm, SearchForm
-from app.models import db, User, Doctor, Patient, MRIScan, Comment 
+from app.forms import ConclusionForm, UploadForm, LoginForm, RegisterDoctorForm, RegisterPatientForm, mri_scans, BatchUploadForm, SearchForm
+from app.models import db, User, Doctor, Patient, MRIScan, Conclusion
 
 from flask import flash, jsonify, render_template, redirect, request, url_for, send_from_directory
 from flask_login import LoginManager, login_user, login_required, logout_user, current_user
@@ -144,20 +144,20 @@ def autocomplete():
     results = [{'id': patient.id, 'name': f'{patient.first_name} {patient.last_name}'} for patient in patients]
     return jsonify(matching_results=results)
 
-@app.route('/mri_scans/<int:mri_scan_id>/comments', methods=['GET'])
-def get_comments(mri_scan_id):
+@app.route('/mri_scans/<int:mri_scan_id>/conclusions', methods=['GET'])
+def get_conclusions(mri_scan_id):
     mri_scan = MRIScan.query.get_or_404(mri_scan_id)
-    comments = []
-    for comment in mri_scan.comments:
-        doctor = Doctor.query.filter_by(id=comment.doctor_id).first()
-        comment_data = {
-            'id': comment.id,
+    conclusions = []
+    for conclusion in mri_scan.conclusions:
+        doctor = Doctor.query.filter_by(id=conclusion.doctor_id).first()
+        conclusion_data = {
+            'id': conclusion.id,
             'doctor': doctor.first_name + ' ' + doctor.last_name, 
-            'comment': comment.comment,
-            'created_at': comment.created_at.strftime('%Y-%m-%d %H:%M:%S'),
+            'conclusion': conclusion.conclusion,
+            'created_at': conclusion.created_at.strftime('%Y-%m-%d %H:%M:%S'),
         }
-        comments.append(comment_data)
-    return jsonify(comments)
+        conclusions.append(conclusion_data)
+    return jsonify(conclusions)
 
 @app.route('/profile', methods=['GET', 'POST'])
 @login_required
@@ -188,27 +188,30 @@ def image(filename):
             flash("MRI scan not found.", "danger")
             return redirect(url_for('profile'))
 
-        form = CommentForm()
+        form = ConclusionForm()
         if form.validate_on_submit():
             try:
-                new_comment = Comment(
+                print('here')
+                new_conclusion = Conclusion(
                     mri_scan_id=mri_scan.id,
                     doctor_id=current_user.doctor.id,
-                    comment=form.comment.data,
+                    conclusion=form.conclusion.data,
                     created_at=datetime.now(utc_plus_3)
                 )
-                db.session.add(new_comment)
+                print('here2')
+                db.session.add(new_conclusion)
                 db.session.commit()
-                flash("Comment added successfully.", "success")
+                print('here3')
+                flash("Conclusion added successfully.", "success")
                 return redirect(url_for('image', filename=filename))
             except Exception as e:
                 db.session.rollback()
-                app.logger.error(f"Error adding comment: {str(e)}")
-                flash("Failed to add comment. Please try again.", "danger")
+                app.logger.error(f"Error adding conclusion: {str(e)}")
+                flash("Failed to add conclusion. Please try again.", "danger")
 
-        # Query all comments related to the MRI scan
-        comments = Comment.query.filter_by(mri_scan_id=mri_scan.id).all()
-        return render_template('comment_form.html', mri_scan=mri_scan, comments=comments, form=form)
+        # Query all conclusions related to the MRI scan
+        conclusions = Conclusion.query.filter_by(mri_scan_id=mri_scan.id).all()
+        return render_template('conclusion_form.html', mri_scan=mri_scan, conclusions=conclusions, form=form)
     else:
         redirect(url_for('profile'))
 

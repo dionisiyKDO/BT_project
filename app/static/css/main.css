@@ -221,8 +221,8 @@ span {
     gap: 20px;
 }
 
-/* List of comments */
-.modal-comments-list {
+/* List of conclusions */
+.modal-conclusions-list {
     list-style-type: none;
     padding: 0;
 }
@@ -251,29 +251,29 @@ span {
     font-size: 1.5rem;
 }
 
-.comment {
+.conclusion {
     margin-bottom: 10px;
 }
 
-.comment .comment-info {
+.conclusion .conclusion-info {
     font-weight: bold;
     margin-bottom: 4px;
 }
 
-.comment .comment-created-at {
+.conclusion .conclusion-created-at {
     font-weight: normal;
     font-size: 0.9rem;
     color: #666;
 }
 
-.comment .comment-text {
+.conclusion .conclusion-text {
     margin-left: 10px;
 }
 /* #endregion */
 
-/* file comment */
+/* file conclusion */
 /* #region */
-.comment-container-aside {
+.conclusion-container-aside {
     background-color: #1c222e;
     padding: 20px;
     border-radius: 20px;
@@ -288,24 +288,24 @@ span {
 
 
 
-.comment-container {
+.conclusion-container {
     display: flex;
     flex-direction: column;
     align-items: center;
     max-width: 800px;
 }
 
-.comment-container-item {
+.conclusion-container-item {
     width: 75%;
 }
 
-.comment-container-header {
+.conclusion-container-header {
     font-size: 1.5rem;
     text-align: center;
     margin-bottom: 1rem;
 }
 
-.comment-container img {
+.conclusion-container img {
     object-fit: cover;
     border-radius: 1.5rem;
     width: 100%;
@@ -313,19 +313,19 @@ span {
     max-height: 600px;
 }
 
-.comment-container form {
+.conclusion-container form {
     margin-top: 1rem;
 }
 
 
-.comments-list {
+.conclusions-list {
     list-style-type: none;
     list-style-type: none;
     padding: 0;
     margin: 0;
 }
 
-.comment {
+.conclusion {
     display: block;
     border: 1px solid #ccc;
     border-radius: 5px;
@@ -338,14 +338,14 @@ span {
     margin-bottom: 0.2rem;
 }
 
-.comment-date {
+.conclusion-date {
     font-style: italic;
     font-size: 12px;
     color: #666;
     margin-bottom: 0.5rem;
 }
 
-.comment-content {
+.conclusion-content {
     font-size: 16px;
 }
 

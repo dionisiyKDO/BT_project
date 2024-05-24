@@ -6,34 +6,34 @@
 
 {% block content %}
 
-<div class="container comment-container">
-    <div class="comment-container-item comment-container-header">
+<div class="container conclusion-container">
+    <div class="conclusion-container-item conclusion-container-header">
         <h2>MRI Scan: {{ mri_scan.file_name }}</h2>
         <img src="{{ url_for('get_file', filename=mri_scan.file_name) }}" alt="MRI Scan Image: {{ mri_scan.file_name }}">
     </div>
 
-    <aside class="comment-container-aside">
+    <aside class="conclusion-container-aside">
         <p><strong>First name: </strong>{{ mri_scan.patient.first_name }}</p>
         <p><strong>Last name: </strong>{{ mri_scan.patient.last_name }}</p>
         <p><strong>Diagnosis: </strong>{{ mri_scan.diagnosis }}</p>
         <p><strong>Diagnosed: </strong>{{ mri_scan.upload_date | formatdatetime }}</p>
     </aside>
 
-    <ul class="comment-container-item comments-list">
-        {% for comment in comments %}
-            <li class="comment">
-                <div class="doctor-name">Dr. {{ comment.doctor.first_name }} {{ comment.doctor.last_name }}</div>
-                <div class="comment-date">{{ comment.created_at | formatdatetime }}</div>
-                <div class="comment-content">{{ comment.comment }}</div>
+    <ul class="conclusion-container-item conclusions-list">
+        {% for conclusion in conclusions %}
+            <li class="conclusion">
+                <div class="doctor-name">Dr. {{ conclusion.doctor.first_name }} {{ conclusion.doctor.last_name }}</div>
+                <div class="conclusion-date">{{ conclusion.created_at | formatdatetime }}</div>
+                <div class="conclusion-content">{{ conclusion.conclusion }}</div>
             </li>
         {% endfor %}
     </ul>
 
-    <form class="comment-container-item" method="POST">
+    <form class="conclusion-container-item" method="POST">
         {{ form.hidden_tag() }}
 
-        {{ form.comment.label }}
-        {{ form.comment }}
+        {{ form.conclusion.label }}
+        {{ form.conclusion }}
 
         {{ form.submit }}
         </div>
