@@ -171,6 +171,7 @@ class MRIImageClassifier:
         print(f'Test loss: {loss:.4f}')
         print(f'Test accuracy: {accuracy:.4f}')
         print(f'Training time: {self.training_time:.4f}')
+        return {'loss': loss, 'accuracy': accuracy, 'training_time': self.training_time}
         # endregion
 
 

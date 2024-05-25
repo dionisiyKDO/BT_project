@@ -1,7 +1,7 @@
 from neural_network import MRIImageClassifier
 from app import app
 
-from app.forms import ConclusionForm, UploadForm, LoginForm, RegisterDoctorForm, RegisterPatientForm, mri_scans, BatchUploadForm, SearchForm
+from app.forms import *
 from app.models import db, User, Doctor, Patient, MRIScan, Conclusion
 
 from flask import flash, jsonify, render_template, redirect, request, url_for, send_from_directory
@@ -13,6 +13,9 @@ from flask_bcrypt import Bcrypt
 from datetime import datetime, timezone
 import os
 import pytz
+
+# Configure the app
+# region
 
 # Initialize extensions
 db.init_app(app)
@@ -32,6 +35,7 @@ def get_file(filename):
         return send_from_directory(app.config['UPLOADED_IMAGES_DEST'], filename)
     except Exception as e:
         app.logger.error(f"Error sending file {filename}: {str(e)}")
+        flash('Failed to retrieve file.', 'danger')
         return redirect(url_for('home'))
 
 @app.template_filter('formatdatetime')
@@ -67,6 +71,8 @@ model.load_model_from_checkpoint(checkpoint_path)
 with app.app_context():
     db.create_all()
     create_admin_user()
+
+# endregion
 
 # General routes
 # region
@@ -295,17 +301,57 @@ def admin_profile():
     if current_user.role != 'admin':
         flash('Access unauthorized!', 'danger')
         return redirect(url_for('index'))
-    return render_template('admin_profile.html')
+    return render_template('admin/admin_profile.html')
 
-@app.route('/admin/train')
+
+@app.route('/admin/users')
 @login_required
-def initiate_training():
+def manage_users():
     if current_user.role != 'admin':
         flash('Access unauthorized!', 'danger')
         return redirect(url_for('index'))
-    # Here you can add the logic to initiate TensorFlow training
-    flash('Neural network training initiated.', 'success')
-    return redirect(url_for('admin_profile'))
+    users = User.query.all()
+    return render_template('admin/manage_users.html', users=users)
+
+@app.route('/admin/users/update/<int:user_id>', methods=['GET', 'POST'])
+@login_required
+def update_user(user_id):
+    if current_user.role != 'admin':
+        flash('Access unauthorized!', 'danger')
+        return redirect(url_for('index'))
+    user = User.query.get(user_id)
+    form = UserForm(obj=user)
+    if form.validate_on_submit():
+        user.username = form.username.data
+        user.email = form.email.data
+        user.role = form.role.data
+        user.is_active = form.is_active.data
+        db.session.commit()
+        flash('User updated successfully.')
+        return redirect(url_for('manage_users'))
+    return render_template('admin/edit_user.html', form=form, user=user)
+
+@app.route('/admin/users/delete/<int:user_id>', methods=['POST'])
+def delete_user(user_id):
+    if current_user.role != 'admin':
+        flash('Access unauthorized!', 'danger')
+        return redirect(url_for('index'))
+    
+    user = User.query.get(user_id)
+    if user:
+        if user.role == 'doctor':
+            doctor = Doctor.query.filter_by(user_id=user_id).first()
+            if doctor:
+                db.session.delete(doctor)
+        elif user.role == 'patient':
+            patient = Patient.query.filter_by(user_id=user_id).first()
+            if patient:
+                db.session.delete(patient)
+                
+        db.session.delete(user)
+        db.session.commit()
+        flash('User and related record deleted successfully.')
+    return redirect(url_for('manage_users'))
 
 @app.route('/admin/register_doctor', methods=['GET', 'POST'])
 @login_required

@@ -25,6 +25,7 @@ class User(db.Model, UserMixin):
 
     role       = db.Column(db.Enum('admin', 'doctor', 'patient', name='user_roles'), nullable=False)
     created_at = db.Column(db.DateTime(timezone=True), nullable=False, default=datetime.now(timezone.utc))
+    is_active  = db.Column(db.Boolean, default=True)
 
     doctor     = db.relationship('Doctor',  back_populates='user', uselist=False)
     patient    = db.relationship('Patient', back_populates='user', uselist=False)

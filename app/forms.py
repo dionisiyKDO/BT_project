@@ -1,17 +1,16 @@
 from flask_wtf import FlaskForm
-from wtforms import SubmitField, StringField, PasswordField, SelectField, DateField, TextAreaField, HiddenField
+from wtforms import SubmitField, StringField, PasswordField, SelectField, DateField, TextAreaField, HiddenField, IntegerField, BooleanField
 from wtforms_sqlalchemy.fields import QuerySelectField
 from flask_wtf.file import FileField, FileRequired, FileAllowed, MultipleFileField
-from wtforms.validators import InputRequired, Length, ValidationError, Email, DataRequired, EqualTo
+from wtforms.validators import InputRequired, Length, ValidationError, Email, DataRequired, EqualTo, NumberRange
 from flask_uploads import UploadSet, IMAGES
 from app.models import User, Patient
 
 
 mri_scans = UploadSet('images', IMAGES)
 
-def patient_query():
-    return Patient.query
-
+# Upload forms
+# region
 class UploadForm(FlaskForm):
     image       = FileField('Upload Image', validators=[FileAllowed(mri_scans, 'Images only!'), FileRequired('File field should not be empty!')])
     search      = StringField('Search Patient', validators=[InputRequired()])
@@ -21,7 +20,10 @@ class UploadForm(FlaskForm):
 class BatchUploadForm(FlaskForm):
     images = MultipleFileField('Upload Images', validators=[FileAllowed(mri_scans, 'Images only!'), FileRequired('File field should not be empty!')])
     submit = SubmitField('Upload')
+# endregion
 
+# Search and Conclusion forms
+# region
 class SearchForm(FlaskForm):
     search      = StringField('Search Patient', validators=[InputRequired()])
     patient_id  = StringField('Patient ID',     validators=[InputRequired()])
@@ -30,8 +32,10 @@ class SearchForm(FlaskForm):
 class ConclusionForm(FlaskForm):
     conclusion = TextAreaField('Conclusion', validators=[InputRequired()], render_kw={"rows": 4})
     submit  = SubmitField  ('Submit')
+# endregion
 
-
+# Login and Registration forms
+# region
 class LoginForm(FlaskForm):
     email    = StringField  ('Email',    validators=[InputRequired()],                        render_kw={"placeholder": "Email"})
     password = PasswordField('Password', validators=[InputRequired(), Length(min=5, max=50)], render_kw={"placeholder": "Password"})
@@ -57,7 +61,6 @@ class RegisterPatientForm(FlaskForm):
         user = User.query.filter_by(email=email.data).first()
         if user: raise ValidationError('That email is already taken. Please choose a different one.')
 
-
 class RegisterDoctorForm(FlaskForm):
     email            = StringField  ('Email',            validators=[InputRequired(), Email()],               render_kw={"placeholder": "Email"})
     username         = StringField  ('Username',         validators=[InputRequired(), Length(min=4, max=30)], render_kw={"placeholder": "Username"})
@@ -78,5 +81,13 @@ class RegisterDoctorForm(FlaskForm):
     def validate_email(self, email):
         user = User.query.filter_by(email=email.data).first()
         if user: raise ValidationError('That email is already taken. Please choose a different one.')
+# endregion
 
-
+# Admin 
+class UserForm(FlaskForm):
+    username    = StringField('Username', validators=[DataRequired()])
+    email       = StringField('Email', validators=[DataRequired(), Email()])
+    role        = SelectField('Role', choices=[('admin', 'Admin'), ('doctor', 'Doctor'), ('patient', 'Patient')], validators=[DataRequired()])
+    is_active   = BooleanField('Active')
+    submit      = SubmitField('Update')
+    delete      = SubmitField('Delete')

@@ -351,3 +351,43 @@ span {
 
 
 /* #endregion */
+
+/* Admin */
+/* #region */
+.action-cell {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+}
+
+.manage-user-delete button {
+    padding: 1px 10px;
+    margin: 0;
+    width: auto;
+}
+
+.manage-user-delete a {
+    text-decoration: none;
+}
+
+.form-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.edit-user-form {
+    width: 50%;
+}
+
+@media screen and (max-width: 1024px) {
+    .edit-user-form {
+        width: 100%;
+    }
+}
+
+.checkbox {
+    display: flex;
+    align-items: center;
+}
+/* #endregion */
