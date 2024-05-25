@@ -6,21 +6,23 @@
 
 {% block content %}
     <h1>Admin Profile</h1>
-    <p>Welcome, {{ current_user.username }}</p>
 
     <h2>Actions</h2>
-    <ul>
-        <li><a href="{{ url_for('register_doctor') }}">Register New Doctor</a></li>
-        <li><a href="{{ url_for('manage_users') }}">Manage users</a></li>
+    <ul class="admin-actions">
+        <li><a class="btn" href="{{ url_for('register_doctor') }}">Register New Doctor</a></li>
+        <li><a class="btn" href="{{ url_for('manage_users') }}">Manage users</a></li>
+        <li><a class="btn" href="{{ url_for('view_errors') }}">Errors logs</a></li>
     </ul>
 
+
+    <!-- <div class="line"></div>
     {% with messages = get_flashed_messages(with_categories=true) %}
-          {% if messages %}
-            <ul class="messages">
-              {% for category, message in messages %}
-                <li class="{{ category }}">{{ message }}</li>
-              {% endfor %}
-            </ul>
-          {% endif %}
-        {% endwith %}
+        {% if messages %}
+        <ul class="messages">
+            {% for category, message in messages %}
+            <li class="{{ category }}">{{ message }}</li>
+            {% endfor %}
+        </ul>
+        {% endif %}
+    {% endwith %} -->
 {% endblock %}

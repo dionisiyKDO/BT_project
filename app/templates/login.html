@@ -12,6 +12,10 @@
 
         <h2>Login Form</h2>
 
+        {% for error in errors %}
+            <span style="color: red;">[{{ error }}]</span>
+        {% endfor %}
+
         {{ form.email(size=32) }}<br>
         {% for error in form.email.errors %}
             <span style="color: red;">[{{ error }}]</span>

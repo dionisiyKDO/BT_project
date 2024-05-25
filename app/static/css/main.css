@@ -389,5 +389,26 @@ span {
 .checkbox {
     display: flex;
     align-items: center;
+    margin-bottom: 0.5em;
+}
+
+.checkbox input{
+    margin-top: -7px;
+    margin-left: 0.3em;
+}
+
+.edit-user-form label{
+    margin-left: 0.7em;
+}
+
+.admin-actions li {
+    list-style-type: none;
+}
+
+.btn {
+    display: block;
+    padding: 5px 5px;
+    font-weight: bold;
+    text-decoration: none;
 }
 /* #endregion */

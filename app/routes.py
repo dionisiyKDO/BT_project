@@ -116,6 +116,7 @@ def register_patient():
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
+    errors = []
     form = LoginForm()
     if form.validate_on_submit():
         user = User.query.filter_by(email=form.email.data).first()
@@ -125,14 +126,20 @@ def login():
                 flash('Logged in as admin.', 'success')
                 return redirect(url_for('admin_profile'))
             elif check_password_hash(user.password, form.password.data):
-                login_user(user)
-                flash('Logged in successfully.', 'success')
-                return redirect(url_for('profile'))
+                if user.is_active:
+                    login_user(user)
+                    flash('Logged in successfully.', 'success')
+                    return redirect(url_for('profile'))
+                else:
+                    errors.append('User is not active.')
+                    flash('User is not active.', 'danger')
             else:
-                flash('Invalid email or password.', 'danger')
+                errors.append('Invalid password.')
+                flash('Invalid password.', 'danger')
         else:
+            errors.append('User not found.')
             flash('User not found.', 'danger')
-    return render_template('login.html', form=form)
+    return render_template('login.html', form=form, errors=errors)
 
 @app.route('/logout', methods=['GET', 'POST'])
 @login_required
