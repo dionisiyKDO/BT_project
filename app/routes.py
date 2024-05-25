@@ -2,7 +2,7 @@ from neural_network import MRIImageClassifier
 from app import app
 
 from app.forms import *
-from app.models import db, User, Doctor, Patient, MRIScan, Conclusion
+from app.models import *
 
 from flask import flash, jsonify, render_template, redirect, request, url_for, send_from_directory
 from flask_login import LoginManager, login_user, login_required, logout_user, current_user
@@ -47,7 +47,7 @@ def format_datetime(value, format='%d %B %Y %H:%M'):
 def create_admin_user():
     admin_email = 'admin'
     admin_username = 'admin'
-    admin_password = 'admin'
+    admin_password = generate_password_hash('admin')
     admin_role = 'admin'
 
     existing_admin = User.query.filter_by(email=admin_email).first()
@@ -60,7 +60,7 @@ def create_admin_user():
         )
         db.session.add(admin_user)
         db.session.commit()
-        print("Admin user created.")
+        app.logger.info("Admin user created.")
 
 # Load the model
 checkpoint_path = './checkpoints/OwnV2.epoch36-val_acc0.9922.hdf5'
@@ -106,12 +106,12 @@ def register_patient():
             )
             db.session.add(patient)
             db.session.commit()
-            flash('Registration successful. Please log in.', 'success')
+            flash('Registration successful.', 'success')
             return redirect(url_for('login'))
         except Exception as e:
             db.session.rollback()
             app.logger.error(f"Error during registration: {str(e)}")
-            flash('Registration failed. Please try again.', 'danger')
+            flash('Registration failed.', 'danger')
     return render_template('register_patient.html', form=form)
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -119,22 +119,26 @@ def login():
     form = LoginForm()
     if form.validate_on_submit():
         user = User.query.filter_by(email=form.email.data).first()
-        if user and user.role == 'admin':
-            print('admin')
-            login_user(user)
-            return redirect(url_for('admin_profile'))
-        else:
-            if user and check_password_hash(user.password, form.password.data):
+        if user:
+            if user.role == 'admin':
                 login_user(user)
+                flash('Logged in as admin.', 'success')
+                return redirect(url_for('admin_profile'))
+            elif check_password_hash(user.password, form.password.data):
+                login_user(user)
+                flash('Logged in successfully.', 'success')
                 return redirect(url_for('profile'))
             else:
-                flash('Invalid email or password', 'danger')
+                flash('Invalid email or password.', 'danger')
+        else:
+            flash('User not found.', 'danger')
     return render_template('login.html', form=form)
 
 @app.route('/logout', methods=['GET', 'POST'])
 @login_required
 def logout():
     logout_user()
+    flash('Logged out successfully.', 'success')
     return redirect(url_for('home'))
 # endregion
 
@@ -184,11 +188,7 @@ def profile():
 @login_required
 def image(filename):
     if current_user.role == 'doctor':
-        if not current_user.is_authenticated or current_user.role != 'doctor':
-            flash("Access denied.", "danger")
-            return redirect(url_for('index'))
 
-        # Query the MRI scan by filename
         mri_scan = MRIScan.query.filter_by(file_name=filename).first()
         if not mri_scan:
             flash("MRI scan not found.", "danger")
@@ -197,17 +197,14 @@ def image(filename):
         form = ConclusionForm()
         if form.validate_on_submit():
             try:
-                print('here')
                 new_conclusion = Conclusion(
                     mri_scan_id=mri_scan.id,
                     doctor_id=current_user.doctor.id,
                     conclusion=form.conclusion.data,
                     created_at=datetime.now(utc_plus_3)
                 )
-                print('here2')
                 db.session.add(new_conclusion)
                 db.session.commit()
-                print('here3')
                 flash("Conclusion added successfully.", "success")
                 return redirect(url_for('image', filename=filename))
             except Exception as e:
@@ -215,11 +212,11 @@ def image(filename):
                 app.logger.error(f"Error adding conclusion: {str(e)}")
                 flash("Failed to add conclusion. Please try again.", "danger")
 
-        # Query all conclusions related to the MRI scan
         conclusions = Conclusion.query.filter_by(mri_scan_id=mri_scan.id).all()
         return render_template('conclusion_form.html', mri_scan=mri_scan, conclusions=conclusions, form=form)
     else:
-        redirect(url_for('profile'))
+        flash('Access denied.', 'danger')
+        return redirect(url_for('profile'))
 
 @app.route('/delete_image', methods=['GET', 'POST'])
 @login_required
@@ -238,7 +235,7 @@ def delete_image():
     except Exception as e:
         db.session.rollback()
         app.logger.error(f"Error deleting file {mri_scan.file_name}: {str(e)}")
-        flash("Failed to delete image. Please try again.", "danger")
+        flash("Failed to delete image.", 'danger')
     return redirect(url_for('profile'))
 # endregion
 
@@ -268,7 +265,7 @@ def upload():
         except Exception as e:
             db.session.rollback()
             app.logger.error(f"Error uploading image: {str(e)}")
-            flash("Failed to upload image. Please try again.", "danger")
+            flash("Failed to upload image.", "danger")
     return render_template('upload.html', form=form, user=current_user)
 
 @app.route('/batch_upload', methods=['GET', 'POST'])
@@ -297,7 +294,6 @@ def batch_upload():
 @app.route('/admin')
 @login_required
 def admin_profile():
-    print('here' + current_user.role)
     if current_user.role != 'admin':
         flash('Access unauthorized!', 'danger')
         return redirect(url_for('index'))
@@ -327,11 +323,12 @@ def update_user(user_id):
         user.role = form.role.data
         user.is_active = form.is_active.data
         db.session.commit()
-        flash('User updated successfully.')
+        flash('User updated successfully.', 'success')
         return redirect(url_for('manage_users'))
     return render_template('admin/edit_user.html', form=form, user=user)
 
 @app.route('/admin/users/delete/<int:user_id>', methods=['POST'])
+@login_required
 def delete_user(user_id):
     if current_user.role != 'admin':
         flash('Access unauthorized!', 'danger')
@@ -350,7 +347,9 @@ def delete_user(user_id):
                 
         db.session.delete(user)
         db.session.commit()
-        flash('User and related record deleted successfully.')
+        flash('User and related records deleted successfully.', 'success')
+    else:
+        flash('User not found.', 'danger')
     return redirect(url_for('manage_users'))
 
 @app.route('/admin/register_doctor', methods=['GET', 'POST'])
@@ -387,5 +386,26 @@ def register_doctor():
             db.session.rollback()
             app.logger.error(f"Error during registration: {str(e)}")
             flash('Registration failed. Please try again.', 'danger')
-    return render_template('register_doctor.html', form=form)   
+    return render_template('register_doctor.html', form=form)
+
+
+@app.errorhandler(Exception)
+def handle_error(error):
+    error_log = ErrorLog(message=str(error))
+    db.session.add(error_log)
+    db.session.commit()
+    return render_template('error.html', error=error_log), 500
+
+@app.route('/trigger_error')
+def trigger_error():
+    raise Exception("This is a test error")
+
+@app.route('/admin/errors')
+@login_required
+def view_errors():
+    if current_user.role != 'admin':
+        flash('Access unauthorized!', 'danger')
+        return redirect(url_for('index'))
+    errors = ErrorLog.query.order_by(ErrorLog.timestamp.desc()).all()
+    return render_template('admin/errors.html', errors=errors)
 # endregion

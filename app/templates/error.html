@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <h2>Error Details</h2>
+  <table class="table">
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Error Message</th>
+        <th>Timestamp</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>{{ error.id }}</td>
+        <td>{{ error.message }}</td>
+        <td>{{ error.timestamp }}</td>
+      </tr>
+    </tbody>
+  </table>
+{% endblock %}

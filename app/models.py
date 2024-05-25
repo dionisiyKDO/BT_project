@@ -13,6 +13,14 @@ import os
 
 db = SQLAlchemy()
 
+class ErrorLog(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    message = db.Column(db.Text)
+    timestamp = db.Column(db.DateTime, default=datetime.utcnow)
+
+    def __repr__(self):
+        return f"<ErrorLog {self.id}>"
+
 
 class User(db.Model, UserMixin):
     __tablename__ = 'users'
