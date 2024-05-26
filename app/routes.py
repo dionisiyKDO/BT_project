@@ -195,13 +195,14 @@ def profile():
 @login_required
 def image(filename):
     if current_user.role == 'doctor':
-
         mri_scan = MRIScan.query.filter_by(file_name=filename).first()
         if not mri_scan:
             flash("MRI scan not found.", "danger")
             return redirect(url_for('profile'))
 
         form = ConclusionForm()
+        diagnosis_form = DiagnosisForm(diagnosis=mri_scan.diagnosis)
+
         if form.validate_on_submit():
             try:
                 new_conclusion = Conclusion(
@@ -219,8 +220,19 @@ def image(filename):
                 app.logger.error(f"Error adding conclusion: {str(e)}")
                 flash("Failed to add conclusion. Please try again.", "danger")
 
+        if diagnosis_form.validate_on_submit():
+            try:
+                mri_scan.diagnosis = diagnosis_form.diagnosis.data
+                db.session.commit()
+                flash("Diagnosis updated successfully.", "success")
+                return redirect(url_for('image', filename=filename))
+            except Exception as e:
+                db.session.rollback()
+                app.logger.error(f"Error updating diagnosis: {str(e)}")
+                flash("Failed to update diagnosis. Please try again.", "danger")
+
         conclusions = Conclusion.query.filter_by(mri_scan_id=mri_scan.id).all()
-        return render_template('conclusion_form.html', mri_scan=mri_scan, conclusions=conclusions, form=form)
+        return render_template('conclusion_form.html', mri_scan=mri_scan, conclusions=conclusions, form=form, diagnosis_form=diagnosis_form)
     else:
         flash('Access denied.', 'danger')
         return redirect(url_for('profile'))

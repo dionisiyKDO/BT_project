@@ -30,8 +30,12 @@ class SearchForm(FlaskForm):
     submit      = SubmitField('Search')
 
 class ConclusionForm(FlaskForm):
-    conclusion = TextAreaField('Conclusion', validators=[InputRequired()], render_kw={"rows": 4})
-    submit  = SubmitField  ('Submit')
+    conclusion  = TextAreaField('Conclusion', validators=[InputRequired()], render_kw={"rows": 4})
+    submit      = SubmitField  ('Submit')
+
+class DiagnosisForm(FlaskForm):
+    diagnosis   = StringField('Change diagnosis', validators=[DataRequired()])
+    submit      = SubmitField('Upload')
 # endregion
 
 # Login and Registration forms
@@ -84,6 +88,7 @@ class RegisterDoctorForm(FlaskForm):
 # endregion
 
 # Admin 
+# region
 class UserForm(FlaskForm):
     username    = StringField('Username', validators=[DataRequired()])
     email       = StringField('Email', validators=[DataRequired(), Email()])
@@ -91,3 +96,4 @@ class UserForm(FlaskForm):
     is_active   = BooleanField('Active')
     submit      = SubmitField('Update')
     delete      = SubmitField('Delete')
+# endregion
