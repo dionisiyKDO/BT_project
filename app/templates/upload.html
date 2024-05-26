@@ -41,7 +41,10 @@
         <div class="image-container-header">
             <h3>Classification Result: <br><strong>{{ text }}</strong></h3>
         </div>
-        <img src="{{ file_url }}" alt="MRI_image">
+        <div>
+            <img src="{{ file_url }}" alt="MRI_image">
+            <a href="{{ url_for('image', filename=mri_scan.file_name) }}" class="btn upload-conclusion">Write Conclusion</a>
+        </div>
     </div>
     {% endif %}
 

@@ -280,7 +280,7 @@ def upload():
             db.session.add(mri_scan)
             db.session.commit()
             flash('Image uploaded and classified successfully!', 'success')
-            return render_template('upload.html', form=form, text=predicted_class, file_url=file_url, user=current_user)
+            return render_template('upload.html', form=form, text=predicted_class, file_url=file_url, user=current_user, mri_scan=mri_scan)
         except Exception as e:
             db.session.rollback()
             app.logger.error(f"Error uploading image: {str(e)}")

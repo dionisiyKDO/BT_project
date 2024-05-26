@@ -130,6 +130,18 @@ span {
     max-height: 500px;
 }
 
+.upload-conclusion {
+    display: block;
+    color: white;
+    background-color: #047878;
+    font-weight: 400 !important;
+    padding: 10px 20px !important;
+    margin: 10px 0;
+    border-radius: 5px;
+    width: 100%;
+    text-align: center;
+}
+
 .image-container-header {
     height: 50px;
     display: flex;
