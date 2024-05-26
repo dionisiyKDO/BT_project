@@ -90,9 +90,11 @@ class RegisterDoctorForm(FlaskForm):
 # Admin 
 # region
 class UserForm(FlaskForm):
-    username    = StringField('Username', validators=[DataRequired()])
-    email       = StringField('Email', validators=[DataRequired(), Email()])
+    username    = StringField('Username',   validators=[DataRequired()])
+    email       = StringField('Email',      validators=[DataRequired(), Email()])
     role        = SelectField('Role', choices=[('admin', 'Admin'), ('doctor', 'Doctor'), ('patient', 'Patient')], validators=[DataRequired()])
+    first_name  = StringField('First name', validators=[DataRequired()])
+    last_name   = StringField('Last name',  validators=[DataRequired()])
     is_active   = BooleanField('Active')
     submit      = SubmitField('Update')
     delete      = SubmitField('Delete')

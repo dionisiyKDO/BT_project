@@ -335,11 +335,21 @@ def update_user(user_id):
         flash('Access unauthorized!', 'danger')
         return redirect(url_for('index'))
     user = User.query.get(user_id)
-    form = UserForm(obj=user)
+    if user.doctor:
+        form = UserForm(obj=user, first_name=user.doctor.first_name, last_name=user.doctor.last_name)
+    else:
+        form = UserForm(obj=user, first_name=user.patient.first_name, last_name=user.patient.last_name)
+
     if form.validate_on_submit():
         user.username = form.username.data
         user.email = form.email.data
         user.role = form.role.data
+        if user.doctor:
+            user.doctor.first_name = form.first_name.data
+            user.doctor.last_name = form.last_name.data
+        else:
+            user.patient.first_name = form.first_name.data
+            user.patient.last_name = form.last_name.data
         user.is_active = form.is_active.data
         db.session.commit()
         flash('User updated successfully.', 'success')
@@ -410,7 +420,7 @@ def register_doctor():
 
 @app.errorhandler(Exception)
 def handle_error(error):
-    error_log = ErrorLog(message=str(error))
+    error_log = ErrorLog(message=str(error), timestamp=datetime.now(utc_plus_3))
     db.session.add(error_log)
     db.session.commit()
     return render_template('error.html', error=error_log), 500
