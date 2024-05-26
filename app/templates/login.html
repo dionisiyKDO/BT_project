@@ -1,13 +1,12 @@
 {% extends 'base.html' %}
 
 {% block head %}
-  <title>Login</title>
+    <title>Login</title>
 {% endblock %}
 
 {% block content %}
-
-<div class="container loginform">
-    <form id="registerForm" method="POST">
+<div class="container form-container">
+    <form method="POST">
         {{ form.hidden_tag() }}
 
         <h2>Login Form</h2>
@@ -16,20 +15,17 @@
             <span style="color: red;">[{{ error }}]</span>
         {% endfor %}
 
-        {{ form.email(size=32) }}<br>
+        {{ form.email }}
         {% for error in form.email.errors %}
             <span style="color: red;">[{{ error }}]</span>
         {% endfor %}
 
-        {{ form.password(size=32) }}<br>
+        {{ form.password }}
         {% for error in form.password.errors %}
             <span style="color: red;">[{{ error }}]</span>
         {% endfor %}
         
         {{ form.submit }}
-        
     </form>
-
 </div>
-
 {% endblock %}

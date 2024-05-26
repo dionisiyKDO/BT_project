@@ -2,6 +2,7 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_login import UserMixin
 from datetime import datetime, timezone, date
 import os
+import pytz
 
 # to recreate the test.db file uncomment the following code 
 # uncomment + create_databese_items() function in run.py
@@ -12,11 +13,12 @@ import os
 #     print('test.db does not exist')
 
 db = SQLAlchemy()
+utc_plus_3 = pytz.timezone('Etc/GMT-3')
 
 class ErrorLog(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     message = db.Column(db.Text)
-    timestamp = db.Column(db.DateTime, default=datetime.utcnow)
+    timestamp = db.Column(db.DateTime, default=datetime.now(utc_plus_3))
 
     def __repr__(self):
         return f"<ErrorLog {self.id}>"

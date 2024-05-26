@@ -5,7 +5,7 @@
 {% endblock %}
 
 {% block content %}
-<div class="form-container">
+<div class="form-container container">
     <h1>Edit User {{ user.username }}</h1>
     <form class="edit-user-form" method="post">
         {{ form.hidden_tag() }}
@@ -20,12 +20,6 @@
         {{ form.email.label }}
         {{ form.email(size=32) }}
         {% for error in form.email.errors %}
-            <span style="color: red;">[{{ error }}]</span>
-        {% endfor %}
-    
-        {{ form.role.label }}
-        {{ form.role }}
-        {% for error in form.role.errors %}
             <span style="color: red;">[{{ error }}]</span>
         {% endfor %}
     

@@ -12,7 +12,7 @@ mri_scans = UploadSet('images', IMAGES)
 # Upload forms
 # region
 class UploadForm(FlaskForm):
-    image       = FileField('Upload Image', validators=[FileAllowed(mri_scans, 'Images only!'), FileRequired('File field should not be empty!')])
+    image       = FileField  ('Upload Image',   validators=[FileAllowed(mri_scans, 'Images only!'), FileRequired('File field should not be empty!')])
     search      = StringField('Search Patient', validators=[InputRequired()])
     patient_id  = StringField('Patient ID',     validators=[InputRequired()])
     submit      = SubmitField('Upload')

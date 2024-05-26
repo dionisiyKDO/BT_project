@@ -5,11 +5,10 @@
 {% endblock %}
 
 {% block content %}
-
 <div class="profile-container container">
     <h2>Profile Dr. {{ current_user.doctor.first_name }} {{ current_user.doctor.last_name }}</h2>
     
-    <form method="POST" action="{{ url_for('profile') }}" autocomplete="off">
+    <form class="profile-search-form" method="POST" autocomplete="off">
         {{ form.hidden_tag() }}
 
         {{ form.search.label }}
@@ -34,7 +33,9 @@
         {% endfor %}
     </div>
 </div>
+{% endblock %}
 
+{% block scripts %}
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         const deleteButtons = document.querySelectorAll('.delete-btn');

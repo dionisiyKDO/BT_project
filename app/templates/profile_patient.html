@@ -1,14 +1,13 @@
 {% extends 'base.html' %}
 
 {% block head %}
-  <title>Login</title>
+    <title>Patient profile</title>
 {% endblock %}
 
 {% block content %}
-
 <div class="profile-container container">
     <h1>Profile Patient. {{ current_user.patient.first_name }} {{ current_user.patient.last_name }} </h1>
-    <h2>All Images</h2>
+    <h2>All your images</h2>
     
     <div class="grid cards">
         {% for mri_scan in mri_scans %}
@@ -28,7 +27,6 @@
         {% endfor %}
     </div>
 
-    <!-- HTML structure for the modal -->
     <div id="modal-container" class="modal-container">
         <div class="modal-content">
             <span class="close-btn" onclick="closeModal()">&times;</span>
@@ -37,11 +35,9 @@
             <ul id="modal-conclusions-list"></ul>
         </div>
     </div>
-
 </div>
 
 <script>
-    // JavaScript to handle opening and closing the modal
     document.addEventListener('DOMContentLoaded', function() {
         const viewDetailsButtons = document.querySelectorAll('.view-details-btn');
 
@@ -69,7 +65,6 @@
         const modalImage = document.getElementById('modal-image');
         const modalConclusionsList = document.getElementById('modal-conclusions-list');
         const modalDiagnosis = document.getElementById('modal-diagnosis');
-
 
         modalImage.src = imageSrc;
         modalConclusionsList.innerHTML = '';

@@ -413,6 +413,6 @@ def view_errors():
     if current_user.role != 'admin':
         flash('Access unauthorized!', 'danger')
         return redirect(url_for('index'))
-    errors = ErrorLog.query.order_by(ErrorLog.timestamp.desc()).all()
+    errors = ErrorLog.query.order_by(ErrorLog.id.desc()).all()
     return render_template('admin/errors.html', errors=errors)
 # endregion

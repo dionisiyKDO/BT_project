@@ -19,109 +19,24 @@ button {
     cursor: pointer;
 }
 
-p {
+p, span {
     margin-bottom: 0.7rem;
 }
 
 span {
     display: inline-block;
-    margin-bottom: 0.7rem;
 }
 
 @media screen and (max-width: 1024px) {
     html {
         font-size: 16px;
     }
-    
-}
-/* #endregion */
-
-/* Register | Login form */
-/* #region */
-.registerform, .loginform {
-    max-width: 500px;
-}
-.registerform h2, .loginform h2 {
-    margin-bottom: 12px;
-}
-.registerform label, .loginform label {
-    font-size: 0.8rem;
-    margin-top: -14px;
-    margin-bottom: 2px;
-    margin-left: 2px;
-}
-.registerform #submit, .loginform #submit {
-    margin-bottom: 0;
-}
-/* #endregion */
-
-/* Upload */
-/* #region */
-
-.upload-container h2 {
-    text-align: center;
-    font-size: 2rem;
-    margin-bottom: 1rem;
 }
 
-.upload-container h3 {
-    text-align: center;
-    margin-bottom: 0rem;
-}
-
-.upload-container form {
-    max-width: 400px;
-}
-
-.images-container {
-    display: flex;
-    flex-direction: row;
-}
-
-.image-container{
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-}
-
-.image-container button {
-    padding: 5px 10px;
-    margin: 0 10px;
-    width: 150px;
-    height: 100%;
-}
-
-.image-container-header {
-    height: 50px;
-    display: flex;
-    flex-direction: row;
-    justify-content: space-around;
-    align-items: center;
-    margin-bottom: 0.5rem;
-}
-
-@media screen and (max-width: 1280px) {
-    .image-container-header {
-        height: 65px;
-    }
-}
-
-.image-container img {
-    object-fit: cover;
-    border-radius: 1.5rem;
-    width: 100%;
-    max-width: 400px;
-    max-height: 500px;
-}
-
-/* #endregion */
-
-/* Profile */
-/* #region */
 .line {
     border: 2px solid #1c222e;
     border-radius: 2px;
-    margin: 1rem 0;
+    margin-bottom: 1rem;
 }
 
 .suggestions-list {
@@ -146,11 +61,113 @@ span {
     color: var(--pico-secondary-background);
     background: var(--pico-mark-color);    
 }
+/* #endregion */
 
-.grid {
+/* Forms */
+/* #region */
+.form-container {
+    max-width: 500px;
+}
+
+.form-container h2 {
+    margin-bottom: 12px;
+}
+
+.form-container #birthday-label {
+    font-size: 0.8rem;
+    margin-top: -14px;
+    margin-bottom: 2px;
+    margin-left: 2px;
+}
+
+.form-container #submit {
+    margin-bottom: 0;
+}
+/* #endregion */
+
+
+/* Upload Section */
+/* #region */
+.upload-container h2 {
+    text-align: center;
+    font-size: 2rem;
+    margin-bottom: 1rem;
+}
+
+.upload-container h3 {
+    text-align: center;
+    margin-bottom: 0;
+}
+
+.upload-container form {
+    max-width: 400px;
+    margin: 0;
+}
+
+.images-container {
+    display: flex;
+    flex-direction: row;
+}
+
+.image-container{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.image-container button {
+    padding: 5px 10px;
+    margin: 0 10px;
+    width: 150px;
+    height: 40px;
+}
+
+.image-container img {
+    object-fit: cover;
+    border-radius: 0.6rem;
+    width: 100%;
+    max-width: 300px;
+    max-height: 500px;
+}
+
+.image-container-header {
+    height: 50px;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-around;
+    align-items: center;
+    margin-bottom: 0.5rem;
+}
+
+@media screen and (max-width: 1280px) {
+    .image-container-header {
+        height: 65px;
+    }
+}
+/* #endregion */
+
+/* Profile Section */
+/* #region */
+.grid.cards {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 1rem;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 20px;
+}
+
+.profile-search-form {
+    width: 35%;
+}
+
+@media screen and (max-width: 1024px) {
+    .profile-search-form {
+        width: 60%;
+    }
+}
+
+@media screen and (max-width: 768px) {
+    .profile-search-form {
+        width: 100%;
+    }
 }
 
 .cards-item {
@@ -164,14 +181,13 @@ span {
 }
 
 .cards-item:hover {
-    transform: translateY(-5px); 
+    transform: translateY(-3px); 
 }
 
 .cards-item img {
     width: 190px;
     height: 220px;
     margin-bottom: 10px;
-
     object-fit: cover;
     border-radius: 1.5rem;
     clip-path: inset(2px 9px 2px 9px);
@@ -182,9 +198,6 @@ span {
     font-weight: bold;
     text-decoration: none;
 }
-
-
-
 
 .modal-container {
     display: none;
@@ -204,45 +217,32 @@ span {
     transform: translate(-50%, -50%);
     background-color: var(--pico-background-color);
     padding: 20px;
-    box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2); /* Box shadow for the modal */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    border-radius: 10px;
 }
 
 .close-btn {
     position: absolute;
-    top: 10px;
+    top: 5px;
     right: 10px;
     cursor: pointer;
     font-size: 20px;
 }
 
-.grid.cards {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-    gap: 20px;
-}
-
-/* List of conclusions */
 .modal-conclusions-list {
     list-style-type: none;
     padding: 0;
 }
 
-.modal-content {
-    border-radius: 25px;
-}
-
 .modal-container img {
     object-fit: cover;
     border-radius: 1.5rem;
-
     max-width: 300px;
     max-height: 400px;
-
     margin-bottom: 10px;
 }
 
 .modal-container p {
-    display: block;
     text-align: center;
 }
 
@@ -254,39 +254,34 @@ span {
 .conclusion {
     margin-bottom: 10px;
 }
-
-.conclusion .conclusion-info {
+.conclusion-info {
     font-weight: bold;
-    margin-bottom: 4px;
+    margin-bottom: 2px;
 }
 
-.conclusion .conclusion-created-at {
+.conclusion-created-at {
     font-weight: normal;
-    font-size: 0.9rem;
+    font-size: 0.8rem;
     color: #666;
 }
 
-.conclusion .conclusion-text {
+.conclusion-text {
     margin-left: 10px;
 }
 /* #endregion */
 
-/* file conclusion */
+/* Doctors conclusion Section */
 /* #region */
 .conclusion-container-aside {
     background-color: #1c222e;
     padding: 20px;
     border-radius: 20px;
-
     position: absolute;
     top: 25%;
     right: 20px;
     width: 25%;
     margin-left: auto;
-    margin-right: 0;
 }
-
-
 
 .conclusion-container {
     display: flex;
@@ -317,9 +312,7 @@ span {
     margin-top: 1rem;
 }
 
-
 .conclusions-list {
-    list-style-type: none;
     list-style-type: none;
     padding: 0;
     margin: 0;
@@ -348,8 +341,6 @@ span {
 .conclusion-content {
     font-size: 16px;
 }
-
-
 /* #endregion */
 
 /* Admin */
@@ -363,21 +354,10 @@ span {
 .manage-user-delete button {
     padding: 1px 10px;
     margin: 0;
-    width: auto;
 }
 
 .manage-user-delete a {
     text-decoration: none;
-}
-
-.form-container {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-}
-
-.edit-user-form {
-    width: 50%;
 }
 
 @media screen and (max-width: 1024px) {

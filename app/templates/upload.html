@@ -2,96 +2,22 @@
 
 {% block head %}
     <title>Upload</title>
-    <script>
-        function previewImage(event) {
-            var input = event.target;
-            var preview = document.getElementById('preview');
-            var previewDiv = document.getElementById('imagePreview');
-
-            if (input.files && input.files[0]) {
-                var reader = new FileReader();
-
-                reader.onload = function (e) {
-                    preview.src = e.target.result;
-                }
-
-                reader.readAsDataURL(input.files[0]);
-                previewDiv.style.display = 'flex';
-            }
-        }
-
-        function clearImage() {
-            document.getElementById('imageInput').value = "";
-            document.getElementById('imagePreview').style.display = 'none';
-        }
-
-        function handleSubmit() {
-            var submitButton = document.getElementById('submitButton');
-            submitButton.disabled = true;
-        }
-
-        document.addEventListener('DOMContentLoaded', function() {
-            const searchInput = document.getElementById('patient-search');
-            const patientList = document.getElementById('patient-list');
-            const patientIdInput = document.getElementById('patient-id');
-    
-            searchInput.addEventListener('input', function() {
-                const query = searchInput.value;
-                if (query.length > 0) {
-                    fetch(`/autocomplete?q=${query}`)
-                        .then(response => response.json())
-                        .then(data => {
-                            patientList.innerHTML = '';
-                            if (data.matching_results.length > 0) {
-                                data.matching_results.forEach(patient => {
-                                    const li = document.createElement('li');
-                                    li.className = 'suggestion-item';
-                                    li.textContent = patient.name;
-                                    li.dataset.id = patient.id;
-                                    patientList.appendChild(li);
-                                });
-                                patientList.style.display = 'block';
-                            } else {
-                                patientList.style.display = 'none';
-                            }
-                        });
-                } else {
-                    patientList.innerHTML = '';
-                    patientList.style.display = 'none';
-                }
-            });
-    
-            patientList.addEventListener('click', function(event) {
-                if (event.target.classList.contains('suggestion-item')) {
-                    const selectedPatient = event.target;
-                    searchInput.value = selectedPatient.textContent;
-                    patientIdInput.value = selectedPatient.dataset.id;
-                    patientList.innerHTML = '';
-                    patientList.style.display = 'none';
-                }
-            });
-    
-            document.addEventListener('click', function(event) {
-                if (!searchInput.contains(event.target) && !patientList.contains(event.target)) {
-                    patientList.innerHTML = '';
-                    patientList.style.display = 'none';
-                }
-            });
-        });
-    </script>
 {% endblock %}
 
 {% block content %}
-
 <div class="upload-container grid">
-    <form class="grid-item" id="uploadForm" method="POST" enctype="multipart/form-data" onsubmit="handleSubmit()" autocomplete="off">
+    <form method="POST" enctype="multipart/form-data" onsubmit="handleSubmit()" autocomplete="off">
         {{ form.hidden_tag() }}
 
         <h2>Upload Image</h2>
 
+        <div class="line"></div>
+
         {{ form.search.label }}
         {{ form.search(id="patient-search") }}
+
         <ul id="patient-list" class="suggestions-list"></ul>
+
         {{ form.patient_id(id="patient-id", type="hidden") }}
         {{ form.image(id="imageInput", onchange="previewImage(event)") }}<br>
         {% for error in form.image.errors %}
@@ -102,11 +28,9 @@
     </form>
 
 
-
-    
     <div class="grid-item image-container preview" id="imagePreview" style="display: none;">
         <div class="image-container-header">
-            <h3 class="preview-item">Selected Image</h3>
+            <h3 class="preview-item">Selected Image</h3><br>
             <button type="submit" onclick="clearImage()">Clear Image</button>
         </div>
         <img class="preview-item" id="preview" src="#" alt="Selected Image">
@@ -115,12 +39,92 @@
     {% if text %}
     <div class="grid-item image-container">
         <div class="image-container-header">
-            <h3>Classification Result: <strong>{{ text }}</strong></h3>
+            <h3>Classification Result: <br><strong>{{ text }}</strong></h3>
         </div>
         <img src="{{ file_url }}" alt="MRI_image">
     </div>
     {% endif %}
+
 </div>
+{% endblock %}
 
 
+{% block scripts %}
+<script>
+    function previewImage(event) {
+        var input = event.target;
+        var preview = document.getElementById('preview');
+        var previewDiv = document.getElementById('imagePreview');
+
+        if (input.files && input.files[0]) {
+            var reader = new FileReader();
+
+            reader.onload = function (e) {
+                preview.src = e.target.result;
+            }
+
+            reader.readAsDataURL(input.files[0]);
+            previewDiv.style.display = 'flex';
+        }
+    }
+
+    function clearImage() {
+        document.getElementById('imageInput').value = "";
+        document.getElementById('imagePreview').style.display = 'none';
+    }
+
+    function handleSubmit() {
+        var submitButton = document.getElementById('submitButton');
+        submitButton.disabled = true;
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const searchInput = document.getElementById('patient-search');
+        const patientList = document.getElementById('patient-list');
+        const patientIdInput = document.getElementById('patient-id');
+
+        searchInput.addEventListener('input', function() {
+            const query = searchInput.value;
+            if (query.length > 0) {
+                fetch(`/autocomplete?q=${query}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        patientList.innerHTML = '';
+                        if (data.matching_results.length > 0) {
+                            data.matching_results.forEach(patient => {
+                                const li = document.createElement('li');
+                                li.className = 'suggestion-item';
+                                li.textContent = patient.name;
+                                li.dataset.id = patient.id;
+                                patientList.appendChild(li);
+                            });
+                            patientList.style.display = 'block';
+                        } else {
+                            patientList.style.display = 'none';
+                        }
+                    });
+            } else {
+                patientList.innerHTML = '';
+                patientList.style.display = 'none';
+            }
+        });
+
+        patientList.addEventListener('click', function(event) {
+            if (event.target.classList.contains('suggestion-item')) {
+                const selectedPatient = event.target;
+                searchInput.value = selectedPatient.textContent;
+                patientIdInput.value = selectedPatient.dataset.id;
+                patientList.innerHTML = '';
+                patientList.style.display = 'none';
+            }
+        });
+
+        document.addEventListener('click', function(event) {
+            if (!searchInput.contains(event.target) && !patientList.contains(event.target)) {
+                patientList.innerHTML = '';
+                patientList.style.display = 'none';
+            }
+        });
+    });
+</script>
 {% endblock %}
