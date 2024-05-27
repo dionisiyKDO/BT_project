@@ -1,4 +1,4 @@
-from neural_network import MRIImageClassifier
+from MRIImageClassifier import MRIImageClassifier
 from app import app
 
 from app.forms import *
