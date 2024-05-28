@@ -4,14 +4,6 @@ from datetime import datetime, timezone, date
 import os
 import pytz
 
-# to recreate the test.db file uncomment the following code 
-# uncomment + create_databese_items() function in run.py
-# if os.path.exists('./instance/test.db'):
-#     os.remove('./instance/test.db')
-#     print('test.db file deleted')
-# else:
-#     print('test.db does not exist')
-
 db = SQLAlchemy()
 utc_plus_3 = pytz.timezone('Etc/GMT-3')
 
@@ -69,10 +61,6 @@ class Patient(db.Model):
     user       = db.relationship('User',    back_populates='patient')
     mri_scans  = db.relationship('MRIScan', back_populates='patient')
 
-    def __str__(self) -> str:
-        return f'{self.first_name} {self.last_name}'
-    # def __repr__(self) -> str:
-    #     return f'{self.first_name} {self.last_name}'
 
 class MRIScan(db.Model):
     __tablename__ = 'mri_scans'

@@ -18,19 +18,7 @@ from keras.models import Sequential
 from keras.layers import Conv2D, MaxPooling2D, Flatten, Dense, Dropout
 from keras.layers import BatchNormalization, MaxPooling2D, GlobalAveragePooling2D
 
-def setup_environment():
-    """Configure GPU settings and logging level."""
-    # Allow dynamically allocate memory on the GPU
-    physical_devices = tf.config.list_physical_devices('GPU')
-    if physical_devices:
-        tf.config.experimental.set_memory_growth(physical_devices[0], True)
 
-    # Silence TensorFlow logs
-    os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
-        # 0 = all messages are logged (default behavior)
-        # 1 = INFO messages are not printed
-        # 2 = INFO and WARNING messages are not printed
-        # 3 = INFO, WARNING, and ERROR messages are not printed
 
 class MRIImageClassifier:
     def __init__(self, network_name='OwnV2'):
@@ -49,7 +37,21 @@ class MRIImageClassifier:
         }
         self.num_classes = len(self.class_labels.keys())
         
-        setup_environment()
+        self.setup_environment()
+
+    def setup_environment(self):
+        """Configure GPU settings and logging level."""
+        # Allow dynamically allocate memory on the GPU
+        physical_devices = tf.config.list_physical_devices('GPU')
+        if physical_devices:
+            tf.config.experimental.set_memory_growth(physical_devices[0], True)
+
+        # Silence TensorFlow logs
+        os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
+            # 0 = all messages are logged (default behavior)
+            # 1 = INFO messages are not printed
+            # 2 = INFO and WARNING messages are not printed
+            # 3 = INFO, WARNING, and ERROR messages are not printed
 
     def set_network_name(self, network_name):
         self.network_name = network_name
