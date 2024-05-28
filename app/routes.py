@@ -12,7 +12,12 @@ from flask_bcrypt import Bcrypt
 
 from datetime import datetime, timezone
 import os
-import pytz
+import pytz, time
+
+from threading import Thread
+import app.globals as globals
+
+
 
 # Configure the app
 # region
@@ -82,6 +87,7 @@ def index():
 
 @app.route('/home', methods=['GET', 'POST'])
 def home():
+    # return jsonify(result={'loss': 0.9, 'accuracy': 99, 'training_time': 12})
     return render_template('index.html')
 
 @app.route('/register', methods=['GET', 'POST'])
@@ -437,4 +443,56 @@ def view_errors():
         return redirect(url_for('index'))
     errors = ErrorLog.query.order_by(ErrorLog.id.desc()).all()
     return render_template('admin/errors.html', errors=errors)
+
 # endregion
+
+
+def retrain_model():
+    # classifier = MRIImageClassifier(network_name='test')
+    # result = classifier.train(epochs=3, batch_size=32, logging=True)
+    
+    for i in range(4):
+        time.sleep(2)
+        globals.progress += globals.progress+25
+    
+    result = {'accuracy': 0.7867187261581421, 'loss': 0.6209670305252075, 'training_time': 84.42889475822449}
+    globals.training_result = result
+    return result
+
+@app.route('/progress')
+def progress_status():
+    try:
+        return jsonify(progress=globals.progress), 200
+    except Exception as e:
+        app.logger.error(f"Error fetching progress: {str(e)}")
+        return jsonify({'error': 'Internal Server Error'}), 500
+
+@app.route('/retrain-results')
+def retrain_results():
+    try:
+        return jsonify(result=globals.training_result), 200
+    except Exception as e:
+        app.logger.error(f"Error fetching retrain results: {str(e)}")
+        return jsonify({'error': 'Internal Server Error'}), 500
+
+@app.route('/admin/start-retrain', methods=['POST'])
+def start_retrain():
+    try:
+        thread = Thread(target=retrain_model)
+        thread.start()
+        return jsonify({'message': 'Retraining started'}), 200
+    except Exception as e:
+        app.logger.error(f"Error starting retraining: {str(e)}")
+        return jsonify({'error': 'Internal Server Error'}), 500
+
+@app.route('/admin/retrain', methods=['GET', 'POST'])
+@login_required
+def retrain():
+    if current_user.role != 'admin':
+        flash('Access denied.', 'danger')
+        return redirect(url_for('home'))
+    
+    globals.progress = 0
+    globals.training_result = None
+
+    return render_template('admin/retrain.html')

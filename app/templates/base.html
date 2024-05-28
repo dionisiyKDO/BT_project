@@ -10,7 +10,6 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}" >
 
     {% block head %}    {% endblock %}
-    {% block scripts %} {% endblock %}
 </head>
 <body>
     <header class="container">
@@ -62,6 +61,7 @@
             Kaminskyi Denys
         </small>
     </footer>
+    {% block scripts %} {% endblock %}
 </body>
 </html>
 

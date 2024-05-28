@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+
+{% block head %}
+    <title>Retrain</title>
+{% endblock %}
+
+{% block content %}
+    <h1>Retrain Model</h1>
+    <p>Click the button below to initiate model retraining.</p>
+    <form id="retrain-form" method="POST">
+        <button id="train-button" type="submit" class="btn btn-primary">Retrain Model</button>
+        <input type="number" id="avatar" name="avatar" />
+    </form>
+    <div id="progress-bar" class="progress" style="margin: 15px;">
+        <progress class="progress-bar" value="1" max="100"/>
+    </div>
+    <div id="training-result-container" hidden>
+        <p id="training-result"></p>
+    </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.getElementById('retrain-form').addEventListener('submit', function(event) {
+        const confirmation = confirm('Are you sure you want to restart the training?');
+        event.preventDefault();
+        if (!confirmation) {
+            return
+        }
+        
+        const form = document.querySelector("#retrain-form");
+        const formData = new FormData(form);
+        fetch('/admin/start-retrain', {
+            method: "POST",
+            body: formData,
+        });
+
+        const resultContainer = document.getElementById("training-result-container");
+        const resultText = document.getElementById("training-result");
+        const progressBar = document.querySelector('.progress-bar');
+        progressBar.value = 0;
+        resultContainer.hidden = true;
+        resultText.innerHTML = '';
+
+        const trainButton = document.getElementById("train-button");
+        trainButton.disabled = true;
+
+
+        if (progressBar.value < 100) {
+            updateProgressBar();
+        }
+    });
+    
+    function updateProgressBar() {
+        fetch('/progress')
+            .then(response => response.json())
+            .then(data => {
+                const progressBar = document.querySelector('.progress-bar');
+                progressBar.value = data.progress;
+
+                if (data.progress < 100) {
+                    setTimeout(updateProgressBar, 3000);
+                } else {
+                    setTimeout(updateResults, 1500);
+                }
+            });
+    }
+
+    function updateResults() {
+        fetch('/retrain-results')
+            .then(response => response.json())
+            .then(data => {
+                const resultContainer = document.getElementById("training-result-container");
+                const resultText = document.getElementById("training-result");
+                const trainButton = document.getElementById("train-button");
+                
+                console.log(data.result)
+                if (data.result) {
+                    resultContainer.hidden = false;
+                    resultText.innerHTML = `<p>Test loss: ${data.result.loss.toFixed(4)}</p>
+                                            <p>Test accuracy: ${data.result.accuracy.toFixed(4)}</p>
+                                            <p>Training time: ${data.result.training_time.toFixed(4)} seconds</p>`;
+
+                    trainButton.disabled = false;
+                }
+                else {
+                    setTimeout(updateResults, 100);
+                }
+            });
+    }
+
+</script>
+{% endblock %}

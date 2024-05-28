@@ -17,7 +17,7 @@ from keras import regularizers
 from keras.models import Sequential
 from keras.layers import Conv2D, MaxPooling2D, Flatten, Dense, Dropout
 from keras.layers import BatchNormalization, MaxPooling2D, GlobalAveragePooling2D
-
+import app.globals as globals
 
 
 class MRIImageClassifier:
@@ -156,6 +156,11 @@ class MRIImageClassifier:
         
         callbacks = [model_rlr, model_cp, model_es] if earlystop else [model_rlr, model_cp]
 
+        def on_epoch_end(epoch, logs):
+            globals.progress = int((epoch + 1) / epochs * 100)
+
+        callbacks.append(tf.keras.callbacks.LambdaCallback(on_epoch_end=on_epoch_end))
+
         self.history = self.model.fit(self.train_generator,
                                       steps_per_epoch=steps_per_epoch,
                                       epochs=epochs,
@@ -242,23 +247,14 @@ class MRIImageClassifier:
     def _get_model(self):
         """ Create a convolutional neural network model based on the specified architecture. """
         if   self.network_name == 'test':
-            # OwnV2
             self.model = Sequential([
-                Conv2D(filters=64, kernel_size=(12,12), strides=(5,5), activation='relu', input_shape=self.img_shape),
-                MaxPooling2D(pool_size=(3,3), strides=(2,2)),
-                BatchNormalization(),
-
-                Conv2D(filters=128, kernel_size=(6,6), strides=(2,2), activation='relu', padding="same"),
-                MaxPooling2D(pool_size=(3,3), strides=(2,2)),
-                BatchNormalization(),
-
-                Conv2D(filters=256, kernel_size=(3,3), strides=(1,1), activation='relu', padding="same"),
-                MaxPooling2D(pool_size=(3,3), strides=(2,2)),
-                BatchNormalization(),
-
+                Conv2D(filters=16, kernel_size=3, activation='relu', padding='same', input_shape=self.img_shape),
+                MaxPooling2D(pool_size=2),
+                Conv2D(filters=32, kernel_size=3, activation='relu'),
+                MaxPooling2D(pool_size=2),
                 Flatten(),
-                Dense(1028, activation='relu'),
-                Dropout(0.5),
+                Dense(64, activation='relu'),
+
                 Dense(self.num_classes,activation='softmax')
             ])
         elif self.network_name == 'VGG16':
