@@ -1,11 +1,9 @@
 from flask_wtf import FlaskForm
-from wtforms import SubmitField, StringField, PasswordField, SelectField, DateField, TextAreaField, HiddenField, IntegerField, BooleanField
-from wtforms_sqlalchemy.fields import QuerySelectField
+from wtforms import SubmitField, StringField, PasswordField, SelectField, DateField, TextAreaField, BooleanField
 from flask_wtf.file import FileField, FileRequired, FileAllowed, MultipleFileField
-from wtforms.validators import InputRequired, Length, ValidationError, Email, DataRequired, EqualTo, NumberRange
+from wtforms.validators import InputRequired, Length, ValidationError, Email, DataRequired, EqualTo
 from flask_uploads import UploadSet, IMAGES
 from app.models import User, Patient
-
 
 mri_scans = UploadSet('images', IMAGES)
 
@@ -74,7 +72,7 @@ class RegisterDoctorForm(FlaskForm):
     first_name = StringField('First Name', validators=[InputRequired(), Length(min=2, max=50)], render_kw={"placeholder": "First Name"})
     last_name  = StringField('Last Name',  validators=[InputRequired(), Length(min=2, max=50)], render_kw={"placeholder": "Last Name"})
     birth_date = DateField  ('Birth Date', validators=[InputRequired()], format='%Y-%m-%d',     render_kw={"placeholder": "Birthday YYYY-MM-DD"})
-    specialty  = StringField('Specialty', render_kw={"placeholder": "Specialy"})  # For doctors
+    specialty  = StringField('Specialty', render_kw={"placeholder": "Specialy"})
     
     submit = SubmitField('Register')
 

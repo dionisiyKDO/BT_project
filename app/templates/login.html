@@ -5,27 +5,27 @@
 {% endblock %}
 
 {% block content %}
-<div class="container form-container">
-    <form method="POST">
-        {{ form.hidden_tag() }}
+    <div class="container form-container">
+        <form method="POST">
+            {{ form.hidden_tag() }}
 
-        <h2>Login Form</h2>
+            <h2>Login Form</h2>
 
-        {% for error in errors %}
-            <span style="color: red;">[{{ error }}]</span>
-        {% endfor %}
+            {% for error in errors %}
+                <span style="color: red;">[{{ error }}]</span>
+            {% endfor %}
 
-        {{ form.email }}
-        {% for error in form.email.errors %}
-            <span style="color: red;">[{{ error }}]</span>
-        {% endfor %}
+            {{ form.email }}
+            {% for error in form.email.errors %}
+                <span style="color: red;">[{{ error }}]</span>
+            {% endfor %}
 
-        {{ form.password }}
-        {% for error in form.password.errors %}
-            <span style="color: red;">[{{ error }}]</span>
-        {% endfor %}
-        
-        {{ form.submit }}
-    </form>
-</div>
+            {{ form.password }}
+            {% for error in form.password.errors %}
+                <span style="color: red;">[{{ error }}]</span>
+            {% endfor %}
+            
+            {{ form.submit }}
+        </form>
+    </div>
 {% endblock %}

@@ -5,20 +5,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/reset.css') }}" >
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.cyan.min.css"/>
-    <!-- href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.fuchia.min.css" -->
-
     <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}" >
 
-    {% block head %}    {% endblock %}
+    {% block head %}{% endblock %}
 </head>
 <body>
     <header class="container">
         <nav>
             <ul>
                 <li><a href="{{url_for('home')}}"><strong>MRI Classification</strong></a></li>
-                <!-- {% if current_user.is_authenticated %}
-                    <li>Dr.{{ current_user.username }}</li>
-                {% endif %} -->
             </ul>
             <ul>
                 {% if current_user.is_authenticated %}
@@ -42,26 +37,21 @@
                     <li><a href="{{url_for('login')}}">Login</a></li>
                     <li><a href="{{url_for('register_patient')}}">Register</a></li>
                 {% endif %}
-                
             </ul>
         </nav>
     </header>
 
-
     <main  class="container">
-        {% block content %}
-        {% endblock %}
+        {% block content %}{% endblock %}
     </main>
 
-
     <footer class="container">
-        {% block footer %}
-        {% endblock %}
+        {% block footer %}{% endblock %}
         <small>
             Kaminskyi Denys
         </small>
     </footer>
-    {% block scripts %} {% endblock %}
+    {% block scripts %}{% endblock %}
 </body>
 </html>
 

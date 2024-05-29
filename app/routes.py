@@ -10,7 +10,7 @@ from flask_uploads import configure_uploads
 from flask_bcrypt import Bcrypt
 from werkzeug.security import generate_password_hash, check_password_hash
 
-from datetime import datetime, timezone
+from datetime import datetime
 from threading import Thread
 import os, pytz, time
 
@@ -316,7 +316,7 @@ def batch_upload():
     return render_template('batch_upload.html', form=form, user=current_user)
 # endregion
 
-#### admin
+## admin
 # region
 @app.route('/admin')
 @login_required
@@ -466,12 +466,11 @@ def retrain_model(architecture, epochs, batch_size, learning_rate, beta_1, beta_
         beta_1=beta_1,
         beta_2=beta_2,
     )
-    
+
     # for i in range(4):
     #     time.sleep(2)
     #     globals.progress += globals.progress+25
     # result = {'accuracy': 0.7867187261581421, 'loss': 0.6209670305252075, 'training_time': 84.42889475822449}
-
 
     globals.training_result = result
     return result

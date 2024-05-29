@@ -5,48 +5,45 @@
 {% endblock %}
 
 {% block content %}
+    <div class="container conclusion-container">
+        <div class="conclusion-container-item conclusion-container-header">
+            <h2>MRI Scan: {{ mri_scan.file_name }}</h2>
+            <img src="{{ url_for('get_file', filename=mri_scan.file_name) }}" alt="MRI Scan Image: {{ mri_scan.file_name }}">
+        </div>
 
-<div class="container conclusion-container">
-    <div class="conclusion-container-item conclusion-container-header">
-        <h2>MRI Scan: {{ mri_scan.file_name }}</h2>
-        <img src="{{ url_for('get_file', filename=mri_scan.file_name) }}" alt="MRI Scan Image: {{ mri_scan.file_name }}">
-    </div>
+        <aside class="conclusion-container-aside">
+            <p><strong>First name: </strong>{{ mri_scan.patient.first_name }}</p>
+            <p><strong>Last name: </strong>{{ mri_scan.patient.last_name }}</p>
+            <p><strong>Diagnosis: </strong>{{ mri_scan.diagnosis }}</p>
+            <p><strong>Diagnosed: </strong>{{ mri_scan.upload_date | formatdatetime }}</p>
+            <div class="line" style="border-color: black;"></div>
+            <form class="change-diagnosis-form" method="POST" enctype="multipart/form-data">
+                {{ diagnosis_form.hidden_tag() }}
+        
+                {{ diagnosis_form.diagnosis.label }}
+                {{ diagnosis_form.diagnosis(class="change-diagnosis-input") }}
+        
+                {{ diagnosis_form.submit(class="change-diagnosis-submit") }}
+            </form>
+        </aside>
 
-    <aside class="conclusion-container-aside">
-        <p><strong>First name: </strong>{{ mri_scan.patient.first_name }}</p>
-        <p><strong>Last name: </strong>{{ mri_scan.patient.last_name }}</p>
-        <p><strong>Diagnosis: </strong>{{ mri_scan.diagnosis }}</p>
-        <p><strong>Diagnosed: </strong>{{ mri_scan.upload_date | formatdatetime }}</p>
-        <div class="line" style="border-color: black;"></div>
-        <form class="change-diagnosis-form" method="POST" enctype="multipart/form-data">
-            {{ diagnosis_form.hidden_tag() }}
-    
-            {{ diagnosis_form.diagnosis.label }}
-            {{ diagnosis_form.diagnosis(class="change-diagnosis-input") }}
-    
-            {{ diagnosis_form.submit(class="change-diagnosis-submit") }}
+        <ul class="conclusion-container-item conclusions-list">
+            {% for conclusion in conclusions %}
+                <li class="conclusion">
+                    <div class="doctor-name">Dr. {{ conclusion.doctor.first_name }} {{ conclusion.doctor.last_name }}</div>
+                    <div class="conclusion-date">{{ conclusion.created_at | formatdatetime }}</div>
+                    <div class="conclusion-content">{{ conclusion.conclusion }}</div>
+                </li>
+            {% endfor %}
+        </ul>
+
+        <form class="conclusion-container-item" method="POST">
+            {{ form.hidden_tag() }}
+
+            {{ form.conclusion.label }}
+            {{ form.conclusion }}
+
+            {{ form.submit }}
         </form>
-    </aside>
-
-    <ul class="conclusion-container-item conclusions-list">
-        {% for conclusion in conclusions %}
-            <li class="conclusion">
-                <div class="doctor-name">Dr. {{ conclusion.doctor.first_name }} {{ conclusion.doctor.last_name }}</div>
-                <div class="conclusion-date">{{ conclusion.created_at | formatdatetime }}</div>
-                <div class="conclusion-content">{{ conclusion.conclusion }}</div>
-            </li>
-        {% endfor %}
-    </ul>
-
-    <form class="conclusion-container-item" method="POST">
-        {{ form.hidden_tag() }}
-
-        {{ form.conclusion.label }}
-        {{ form.conclusion }}
-
-        {{ form.submit }}
-    </form>
-
-    
-</div>
+    </div>
 {% endblock %}
