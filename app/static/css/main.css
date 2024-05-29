@@ -115,15 +115,39 @@ a {
     margin: 0;
 }
 
-.images-container {
-    display: flex;
-    flex-direction: row;
-}
 
-.image-container{
+
+.upload-image-container {
     display: flex;
     flex-direction: column;
     align-items: center;
+}
+
+.upload-image-container button {
+    padding: 5px 10px;
+    margin: 0 10px;
+    width: 150px;
+    height: 40px;
+}
+
+.upload-image-container img {
+    object-fit: cover;
+    border-radius: 0.6rem;
+    width: 100%;
+    max-width: 300px;
+    max-height: 500px;
+}
+.grid-batch {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)) !important;
+    gap: 1rem;
+}
+.images-container {
+    padding: 5px 10px;
+    margin: 0 10px;
+    width: 150px;
+    height: 100%;
+    height: 40px;
 }
 
 .image-container button {

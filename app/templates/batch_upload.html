@@ -2,36 +2,6 @@
 
 {% block head %}
     <title>Batch Upload</title>
-    <script>
-        function previewImages(event) {
-            var files = event.target.files;
-            var previewContainer = document.getElementById('previewContainer');
-            previewContainer.innerHTML = '';
-
-            if (files) {
-                Array.from(files).forEach(file => {
-                    var reader = new FileReader();
-                    reader.onload = function(e) {
-                        var img = document.createElement('img');
-                        img.src = e.target.result;
-                        img.className = 'preview-item';
-                        previewContainer.appendChild(img);
-                    }
-                    reader.readAsDataURL(file);
-                });
-            }
-        }
-
-        function clearImages() {
-            document.getElementById('imageInput').value = "";
-            document.getElementById('previewContainer').innerHTML = '';
-        }
-
-        function handleSubmit() {
-            var submitButton = document.getElementById('submitButton');
-            submitButton.disabled = true;
-        }
-    </script>
 {% endblock %}
 
 {% block content %}
@@ -49,13 +19,13 @@
         {{ form.submit(id="submitButton") }}
     </form>
 
-    <div class="grid image-container preview" id="previewContainer"> </div>
+    <div class="grid grid-batch image-container preview" id="previewContainer"> </div>
 
     {% if results %}
         <h2>Classification Results</h2>
-        <div class="grid image-container">
+        <div class="grid grid-batch">
             {% for file_name, predicted_class in results %}
-            <div class="grid-item">
+            <div class="grid-item image-container">
                 <div class="image-container-header">
                     <h3>{{ predicted_class }}</h3>
                 </div> 
@@ -64,8 +34,38 @@
             {% endfor %}
         </div>
     {% endif %}
-
-
-    
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function previewImages(event) {
+        var files = event.target.files;
+        var previewContainer = document.getElementById('previewContainer');
+        previewContainer.innerHTML = '';
+
+        if (files) {
+            Array.from(files).forEach(file => {
+                var reader = new FileReader();
+                reader.onload = function(e) {
+                    var img = document.createElement('img');
+                    img.src = e.target.result;
+                    img.className = 'preview-item';
+                    previewContainer.appendChild(img);
+                }
+                reader.readAsDataURL(file);
+            });
+        }
+    }
+
+    function clearImages() {
+        document.getElementById('imageInput').value = "";
+        document.getElementById('previewContainer').innerHTML = '';
+    }
+
+    function handleSubmit() {
+        var submitButton = document.getElementById('submitButton');
+        submitButton.disabled = true;
+    }
+</script>
 {% endblock %}

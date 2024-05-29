@@ -30,7 +30,7 @@
     </form>
 
 
-    <div class="grid-item image-container preview" id="imagePreview" style="display: none;">
+    <div class="grid-item upload-image-container preview" id="imagePreview" style="display: none;">
         <div class="image-container-header">
             <h3 class="preview-item">Selected Image</h3><br>
             <button type="button" onclick="clearImage()">Clear Image</button>
@@ -39,7 +39,7 @@
     </div>
 
     {% if text %}
-    <div class="grid-item image-container">
+    <div class="grid-item upload-image-container">
         <div class="image-container-header">
             <h3>Classification Result: <br><strong>{{ text }}</strong></h3>
         </div>
