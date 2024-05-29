@@ -6,7 +6,7 @@
 
 {% block content %}
 <div class="upload-container grid">
-    <form method="POST" enctype="multipart/form-data" onsubmit="handleSubmit()" autocomplete="off">
+    <form method="POST" enctype="multipart/form-data" onsubmit="return handleSubmit()" autocomplete="off">
         {{ form.hidden_tag() }}
 
         <h2>Upload Image</h2>
@@ -15,8 +15,10 @@
 
         {{ form.search.label }}
         {{ form.search(id="patient-search") }}
-
         <ul id="patient-list" class="suggestions-list"></ul>
+        <div id="patient-search-error" style="color: red; display: none;">Please select a valid patient.</div>
+
+        
 
         {{ form.patient_id(id="patient-id", type="hidden") }}
         {{ form.image(id="imageInput", onchange="previewImage(event)") }}<br>
@@ -31,7 +33,7 @@
     <div class="grid-item image-container preview" id="imagePreview" style="display: none;">
         <div class="image-container-header">
             <h3 class="preview-item">Selected Image</h3><br>
-            <button type="submit" onclick="clearImage()">Clear Image</button>
+            <button type="button" onclick="clearImage()">Clear Image</button>
         </div>
         <img class="preview-item" id="preview" src="#" alt="Selected Image">
     </div>
@@ -77,8 +79,17 @@
     }
 
     function handleSubmit() {
-        var submitButton = document.getElementById('submitButton');
-        submitButton.disabled = true;
+        const patientIdInput = document.getElementById('patient-id');
+        const patientSearchError = document.getElementById('patient-search-error');
+
+        if (!patientIdInput.value) {
+            patientSearchError.style.display = 'block';
+            return false;  // Prevent form submission
+        } else {
+            patientSearchError.style.display = 'none';
+        }
+
+        return true;  // Allow form submission
     }
 
     document.addEventListener('DOMContentLoaded', function() {

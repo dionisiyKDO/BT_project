@@ -48,7 +48,7 @@ a {
     z-index: 1000;
     margin-top: -18px;
 
-    background: var(--pico-secondary-background);
+    background: var(--pico-muted-border-color);
     color: var(--pico-mark-color);    
     border-radius: 5px;
 
@@ -62,7 +62,7 @@ a {
     cursor: pointer;
 }
 .suggestions-list .suggestion-item:hover {
-    color: var(--pico-secondary-background);
+    color: var(--pico-muted-border-color);
     background: var(--pico-mark-color);    
 }
 

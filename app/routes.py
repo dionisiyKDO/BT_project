@@ -1,22 +1,18 @@
 from MRIImageClassifier import MRIImageClassifier
 from app import app
-
 from app.forms import *
 from app.models import *
+import app.globals as globals
 
 from flask import flash, jsonify, render_template, redirect, request, url_for, send_from_directory
 from flask_login import LoginManager, login_user, login_required, logout_user, current_user
 from flask_uploads import configure_uploads
-from werkzeug.security import generate_password_hash, check_password_hash
 from flask_bcrypt import Bcrypt
+from werkzeug.security import generate_password_hash, check_password_hash
 
 from datetime import datetime, timezone
-import os
-import pytz, time
-
 from threading import Thread
-import app.globals as globals
-
+import os, pytz, time
 
 
 # Configure the app
@@ -30,18 +26,32 @@ login_manager.login_view = 'login'
 configure_uploads(app, mri_scans)
 utc_plus_3 = pytz.timezone('Etc/GMT-3')
 
+# Create database tables if they don't exist
+with app.app_context():
+    def create_admin_user():
+        admin_email = 'admin'
+        admin_username = 'admin'
+        admin_password = generate_password_hash('admin')
+        admin_role = 'admin'
+
+        existing_admin = User.query.filter_by(email=admin_email).first()
+        if not existing_admin:
+            admin_user = User(
+                email=admin_email,
+                username=admin_username,
+                password=admin_password,
+                role=admin_role
+            )
+            db.session.add(admin_user)
+            db.session.commit()
+            app.logger.info("Admin user created.")
+
+    db.create_all()
+    create_admin_user()
+
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))
-
-@app.route('/uploads/<filename>', methods=['GET', 'POST'])
-def get_file(filename):
-    try:
-        return send_from_directory(app.config['UPLOADED_IMAGES_DEST'], filename)
-    except Exception as e:
-        app.logger.error(f"Error sending file {filename}: {str(e)}")
-        flash('Failed to retrieve file.', 'danger')
-        return redirect(url_for('home'))
 
 @app.template_filter('formatdatetime')
 def format_datetime(value, format='%d %B %Y %H:%M'):
@@ -49,62 +59,10 @@ def format_datetime(value, format='%d %B %Y %H:%M'):
         return ""
     return value.strftime(format)
 
-def create_admin_user():
-    admin_email = 'admin'
-    admin_username = 'admin'
-    admin_password = generate_password_hash('admin')
-    admin_role = 'admin'
-
-    existing_admin = User.query.filter_by(email=admin_email).first()
-    if not existing_admin:
-        admin_user = User(
-            email=admin_email,
-            username=admin_username,
-            password=admin_password,
-            role=admin_role
-        )
-        db.session.add(admin_user)
-        db.session.commit()
-        app.logger.info("Admin user created.")
-
 # Load the model
 checkpoint_path = './checkpoints/OwnV2.epoch36-val_acc0.9922.hdf5'
 model = MRIImageClassifier()
 model.load_model_from_checkpoint(checkpoint_path)
-
-@app.route('/admin/select_checkpoint', methods=['GET', 'POST'])
-def select_checkpoint():
-    checkpoint_path = './checkpoints/OwnV2.epoch36-val_acc0.9922.hdf5'
-    checkpoints_dir = './checkpoints'
-    architectures = model.avaible_network_names
-    checkpoint_files = [f for f in os.listdir(checkpoints_dir) if os.path.isfile(os.path.join(checkpoints_dir, f))]
-    
-    if request.method == 'POST':
-        selected_checkpoint = request.form.get('checkpoint')
-        selected_architecture = request.form.get('architecture')
-        message = None
-        error = None
-        if selected_checkpoint and selected_architecture:
-            checkpoint_path = os.path.join(checkpoints_dir, selected_checkpoint)
-            try:
-                model.network_name = selected_architecture
-                model.load_model_from_checkpoint(checkpoint_path)
-                flash(f'Successfully loaded checkpoint: {selected_checkpoint} with architecture: {selected_architecture}', 'success')
-                message = 'Checkpoint loaded successfully.'
-            except Exception as e:
-                app.logger.error(f"Error loading checkpoint {selected_checkpoint} with architecture {selected_architecture}: {str(e)}")
-                flash(f'Failed to load checkpoint: {selected_checkpoint} with architecture: {selected_architecture}', 'danger')
-                error = 'Failed to load checkpoint.'
-        return render_template('admin/select_checkpoint.html', checkpoint_files=checkpoint_files, architectures=architectures, default_checkpoint=selected_checkpoint, default_architecture=selected_architecture, message=message if message else None, error=error if error else None)
-    
-    return render_template('admin/select_checkpoint.html', checkpoint_files=checkpoint_files, architectures=architectures, default_checkpoint=checkpoint_path, default_architecture='OwnV2')
-
-
-
-# Create database tables if they don't exist
-with app.app_context():
-    db.create_all()
-    create_admin_user()
 
 # endregion
 
@@ -116,15 +74,18 @@ def index():
 
 @app.route('/home', methods=['GET', 'POST'])
 def home():
-    # return jsonify(result={'loss': 0.9, 'accuracy': 99, 'training_time': 12})
     return render_template('index.html')
+# endregion
 
+# Authentication routes
+# region
 @app.route('/register', methods=['GET', 'POST'])
 def register_patient():
     form = RegisterPatientForm()
     if form.validate_on_submit():
         try:
             hashed_password = generate_password_hash(form.password.data)
+            
             user = User(
                 email=form.email.data,
                 username=form.username.data,
@@ -133,15 +94,16 @@ def register_patient():
             )
             db.session.add(user)
             db.session.commit()
+            
             patient = Patient(
                 user_id=user.id,
                 first_name=form.first_name.data,
                 last_name=form.last_name.data,
                 birth_date=form.birth_date.data
             )
-
             db.session.add(patient)
             db.session.commit()
+            
             flash('Registration successful.', 'success')
             return redirect(url_for('login'))
         except Exception as e:
@@ -212,6 +174,7 @@ def get_conclusions(mri_scan_id):
         conclusions.append(conclusion_data)
     return jsonify(conclusions)
 
+
 @app.route('/profile', methods=['GET', 'POST'])
 @login_required
 def profile():
@@ -219,12 +182,12 @@ def profile():
     if current_user.role == 'doctor':
         if form.validate_on_submit():
             patient_id = form.patient_id.data
-            mri_scans = MRIScan.query.filter_by(diagnosed_by=current_user.doctor.id, patient_id=patient_id).all()
+            mri_scans = MRIScan.query.filter_by(diagnosed_by=current_user.doctor.id, patient_id=patient_id).order_by(MRIScan.upload_date.desc()).all()
         else:
-            mri_scans = MRIScan.query.filter_by(diagnosed_by=current_user.doctor.id).all()
+            mri_scans = MRIScan.query.filter_by(diagnosed_by=current_user.doctor.id).order_by(MRIScan.upload_date.desc()).all()
         return render_template('profile_doctor.html', mri_scans=mri_scans, user=current_user, form=form)
     else:
-        mri_scans = MRIScan.query.filter_by(patient_id=current_user.patient.id).all()
+        mri_scans = MRIScan.query.filter_by(patient_id=current_user.patient.id).order_by(MRIScan.upload_date.desc()).all()
         return render_template('profile_patient.html', mri_scans=mri_scans, user=current_user)
 
 @app.route('/profile/<filename>', methods=['GET', 'POST'])
@@ -296,6 +259,15 @@ def delete_image():
 
 # Upload and classify MRI scans
 # region
+@app.route('/uploads/<filename>', methods=['GET', 'POST'])
+def get_file(filename):
+    try:
+        return send_from_directory(app.config['UPLOADED_IMAGES_DEST'], filename)
+    except Exception as e:
+        app.logger.error(f"Error sending file {filename}: {str(e)}")
+        flash('Failed to retrieve file.', 'danger')
+        return redirect(url_for('home'))
+
 @app.route('/upload', methods=['GET', 'POST'])
 @login_required
 def upload():
@@ -344,7 +316,7 @@ def batch_upload():
     return render_template('batch_upload.html', form=form, user=current_user)
 # endregion
 
-# admin
+#### admin
 # region
 @app.route('/admin')
 @login_required
@@ -548,5 +520,34 @@ def retrain():
         return redirect(url_for('home'))
     architectures = model.avaible_network_names
     return render_template('admin/retrain.html', architectures=architectures)
+
+
+@app.route('/admin/select_checkpoint', methods=['GET', 'POST'])
+def select_checkpoint():
+    checkpoint_path = './checkpoints/OwnV2.epoch36-val_acc0.9922.hdf5'
+    checkpoints_dir = './checkpoints'
+    architectures = model.avaible_network_names
+    checkpoint_files = [f for f in os.listdir(checkpoints_dir) if os.path.isfile(os.path.join(checkpoints_dir, f))]
+    
+    if request.method == 'POST':
+        selected_checkpoint = request.form.get('checkpoint')
+        selected_architecture = request.form.get('architecture')
+        message = None
+        error = None
+        if selected_checkpoint and selected_architecture:
+            checkpoint_path = os.path.join(checkpoints_dir, selected_checkpoint)
+            try:
+                model.network_name = selected_architecture
+                model.load_model_from_checkpoint(checkpoint_path)
+                flash(f'Successfully loaded checkpoint: {selected_checkpoint} with architecture: {selected_architecture}', 'success')
+                message = 'Checkpoint loaded successfully.'
+            except Exception as e:
+                app.logger.error(f"Error loading checkpoint {selected_checkpoint} with architecture {selected_architecture}: {str(e)}")
+                flash(f'Failed to load checkpoint: {selected_checkpoint} with architecture: {selected_architecture}', 'danger')
+                error = 'Failed to load checkpoint.'
+        return render_template('admin/select_checkpoint.html', checkpoint_files=checkpoint_files, architectures=architectures, default_checkpoint=selected_checkpoint, default_architecture=selected_architecture, message=message if message else None, error=error if error else None)
+    
+    return render_template('admin/select_checkpoint.html', checkpoint_files=checkpoint_files, architectures=architectures, default_checkpoint=checkpoint_path, default_architecture='OwnV2')
+
 # endregion
 # endregion
