@@ -39,6 +39,10 @@ span {
     margin-bottom: 1rem;
 }
 
+a {
+    text-decoration: none;
+}
+
 .suggestions-list {
     position: absolute;
     z-index: 1000;
@@ -87,8 +91,11 @@ span {
 .form-container #submit {
     margin-bottom: 0;
 }
-/* #endregion */
 
+.color-primary {
+    color: var(--pico-primary);
+}
+/* #endregion */
 
 /* Upload Section */
 /* #region */
@@ -394,6 +401,12 @@ span {
     }
 }
 
+.checkbox-container {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-around;
+}
+
 .checkbox {
     display: flex;
     align-items: center;
@@ -419,4 +432,23 @@ span {
     font-weight: bold;
     text-decoration: none;
 }
+
+#results-panel {
+    position: fixed;
+    top: 20%;
+    right: 2%;
+    width: 300px;
+    padding: 15px;
+    background-color: var(--pico-background-color);
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    border: 1px solid var(--pico-primary);
+    border-radius: 5px;
+    z-index: 1000;
+    display: none;
+}
+
+.retrain-form input {
+    margin-bottom: 10px;
+}
+
 /* #endregion */

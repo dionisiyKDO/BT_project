@@ -5,16 +5,46 @@
 {% endblock %}
 
 {% block content %}
-    <h1>Retrain Model</h1>
-    <p>Click the button below to initiate model retraining.</p>
-    <form id="retrain-form" method="POST">
-        <button id="train-button" type="submit" class="btn btn-primary">Retrain Model</button>
-        <input type="number" id="avatar" name="avatar" />
-    </form>
     <div id="progress-bar" class="progress" style="margin: 15px;">
-        <progress class="progress-bar" value="1" max="100"/>
+        <progress class="progress-bar" value="0" max="100"/>
     </div>
-    <div id="training-result-container" hidden>
+    <form id="retrain-form" class="form-container retrain-form container" method="POST">
+        <h1>Retrain Model</h1>
+        <p id="message">Click the button below to initiate model retraining.</p>
+
+        <div class="form-group">
+            <label for="architecture">Network name</label>
+            <select name="architecture" id="architecture" class="form-control">
+                {% for arch in architectures %}
+                    <option value="{{ arch }}" {% if arch == default_architecture %}selected{% endif %}>{{ arch }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="epochs">Epochs</label>
+            <input type="number" id="epochs" name="epochs" class="form-control" value="20" required />
+        </div>
+        <div class="form-group">
+            <label for="batch_size">Batch Size</label>
+            <input type="number" id="batch_size" name="batch_size" class="form-control" value="16" required />
+        </div>
+        <div class="form-group">
+            <label for="learning_rate">Learning Rate</label>
+            <input type="number" id="learning_rate" name="learning_rate" step="0.0001" class="form-control" value="0.001" required />
+        </div>
+        <div class="form-group">
+            <label for="beta_1">Beta 1</label>
+            <input type="number" id="beta_1" name="beta_1" step="0.0001" class="form-control" value="0.9" required />
+        </div>
+        <div class="form-group">
+            <label for="beta_2">Beta 2</label>
+            <input type="number" id="beta_2" name="beta_2" step="0.0001" class="form-control" value="0.999" required />
+        </div>
+        <button id="train-button" type="submit" class="btn btn-primary">Retrain Model</button>
+        <div id="select-checkpoint" style="text-align: center; display: none;" ><a href="{{ url_for('select_checkpoint') }}" class="color-primary">Load Retrained Checkpoint?</a></div>
+    </form>
+    <div id="results-panel">
+        <h3>Training Results</h3>
         <p id="training-result"></p>
     </div>
 {% endblock %}
@@ -30,21 +60,23 @@
         
         const form = document.querySelector("#retrain-form");
         const formData = new FormData(form);
-        fetch('/admin/start-retrain', {
-            method: "POST",
-            body: formData,
+        fetch('/admin/start-retrain', { method: "POST", body: formData})
+            .then(response => response.json())
+            .then(data => {
+                console.log(data.message);
+                const message = document.getElementById("message");
+                message.innerHTML = data.message;
+                message.classList.add("color-primary");
         });
+        
+        const resultsPanel = document.getElementById("results-panel");
+        resultsPanel.style.display = "none";
 
-        const resultContainer = document.getElementById("training-result-container");
-        const resultText = document.getElementById("training-result");
         const progressBar = document.querySelector('.progress-bar');
         progressBar.value = 0;
-        resultContainer.hidden = true;
-        resultText.innerHTML = '';
 
         const trainButton = document.getElementById("train-button");
         trainButton.disabled = true;
-
 
         if (progressBar.value < 100) {
             updateProgressBar();
@@ -59,7 +91,7 @@
                 progressBar.value = data.progress;
 
                 if (data.progress < 100) {
-                    setTimeout(updateProgressBar, 3000);
+                    setTimeout(updateProgressBar, 1000);
                 } else {
                     setTimeout(updateResults, 1500);
                 }
@@ -70,20 +102,22 @@
         fetch('/retrain-results')
             .then(response => response.json())
             .then(data => {
-                const resultContainer = document.getElementById("training-result-container");
+                const resultsPanel = document.getElementById("results-panel");
                 const resultText = document.getElementById("training-result");
                 const trainButton = document.getElementById("train-button");
+                const message = document.getElementById("message");
+                const selectCheckpoint = document.querySelector('.select-checkpoint');
                 
-                console.log(data.result)
                 if (data.result) {
-                    resultContainer.hidden = false;
+                    resultsPanel.style.display = "block";
                     resultText.innerHTML = `<p>Test loss: ${data.result.loss.toFixed(4)}</p>
                                             <p>Test accuracy: ${data.result.accuracy.toFixed(4)}</p>
                                             <p>Training time: ${data.result.training_time.toFixed(4)} seconds</p>`;
-
                     trainButton.disabled = false;
-                }
-                else {
+                    message.innerHTML = "Training complete!";
+                    message.classList.remove("color-primary");
+                    selectCheckpoint.style.display = "block";
+                } else {
                     setTimeout(updateResults, 100);
                 }
             });

@@ -22,6 +22,7 @@ import app.globals as globals
 
 class MRIImageClassifier:
     def __init__(self, network_name='OwnV2'):
+        self.avaible_network_names = ['OwnV2', 'OwnV1', 'test', 'VGG16', 'VGG19', 'AlexNet', 'InceptionV3', 'EfficientNetV2', 'ResNet50', 'InceptionResNetV2' ]
         self.network_name = network_name
         self.model = None
         self.history = None
@@ -89,7 +90,7 @@ class MRIImageClassifier:
         return predicted_class_label
 
 
-    def train(self, epochs=20, batch_size=16, logging=True, model_summary=True, earlystop=True):
+    def train(self, learning_rate=0.001, beta_1=0.9, beta_2=0.999, epochs=20, batch_size=16, logging=True, model_summary=True, earlystop=True):
         self._get_model()
         if self.model == None: 
             print('=== Incorrect network name ===')
@@ -136,9 +137,9 @@ class MRIImageClassifier:
         # region
         if model_summary: self.model.summary()
         
-        self.model.compile(Adam(learning_rate= 0.001, beta_1=0.9, beta_2=0.999), loss= 'categorical_crossentropy', metrics=['acc'])
-        # model.compile(Adamax(learning_rate= 0.001), loss= 'categorical_crossentropy', metrics=['acc'])
-        # model.compile(SGD(learning_rate=0.001), loss='categorical_crossentropy', metrics= ['acc'])
+        self.model.compile(Adam(learning_rate=learning_rate, beta_1=beta_1, beta_2=beta_2), loss= 'categorical_crossentropy', metrics=['acc'])
+        # model.compile(Adamax(learning_rate=learning_rate), loss= 'categorical_crossentropy', metrics=['acc'])
+        # model.compile(SGD(learning_rate=learning_rate), loss='categorical_crossentropy', metrics= ['acc'])
         
         # endregion
        
@@ -156,7 +157,7 @@ class MRIImageClassifier:
         
         callbacks = [model_rlr, model_cp, model_es] if earlystop else [model_rlr, model_cp]
 
-        def on_epoch_end(epoch, logs):
+        def on_epoch_end(epoch, val_acc):
             globals.progress = int((epoch + 1) / epochs * 100)
 
         callbacks.append(tf.keras.callbacks.LambdaCallback(on_epoch_end=on_epoch_end))
@@ -432,3 +433,7 @@ class MRIImageClassifier:
             ])
 
         else: self.model = None
+
+    def is_compatible_checkpoint(self, checkpoint_path: str):
+        """Check if the checkpoint file is compatible with the current architecture."""
+        return True

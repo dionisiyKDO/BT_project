@@ -1,0 +1,49 @@
+{% extends 'base.html' %}
+
+{% block head %}
+    <title>Select Checkpoint</title>
+{% endblock %}
+
+{% block content %}
+    <div class="container">
+        <h1>Select Checkpoint and Architecture</h1>
+        {% if message %}
+            <p id="message" class="color-primary">{{ message }}</p>
+        {% endif %}
+        {% if error %}
+            <p id="message" style="color: red;">{{ error }}</p>
+        {% endif %}
+        {% if not error and not message %}
+            <p id="message" >Select desired checkpoint and appropriate architecture</p>
+        {% endif %}
+        
+        <!-- {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <ul class="flashes">
+                    {% for category, message in messages %}
+                        <li class="{{ category }}">{{ message }}</li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+        {% endwith %} -->
+        <form method="post">
+            <div class="form-group">
+                <label for="checkpoint">Select a checkpoint to load:</label>
+                <select name="checkpoint" id="checkpoint" class="form-control">
+                    {% for file in checkpoint_files %}
+                        <option value="{{ file }}" {% if file == default_checkpoint.split('/')[-1] %}selected{% endif %}>{{ file }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="architecture">Select the neural network architecture:</label>
+                <select name="architecture" id="architecture" class="form-control">
+                    {% for arch in architectures %}
+                        <option value="{{ arch }}" {% if arch == default_architecture %}selected{% endif %}>{{ arch }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <button type="submit" class="btn btn-primary">Load Checkpoint</button>
+        </form>
+    </div>
+{% endblock %}

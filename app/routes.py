@@ -72,6 +72,35 @@ checkpoint_path = './checkpoints/OwnV2.epoch36-val_acc0.9922.hdf5'
 model = MRIImageClassifier()
 model.load_model_from_checkpoint(checkpoint_path)
 
+@app.route('/admin/select_checkpoint', methods=['GET', 'POST'])
+def select_checkpoint():
+    checkpoint_path = './checkpoints/OwnV2.epoch36-val_acc0.9922.hdf5'
+    checkpoints_dir = './checkpoints'
+    architectures = model.avaible_network_names
+    checkpoint_files = [f for f in os.listdir(checkpoints_dir) if os.path.isfile(os.path.join(checkpoints_dir, f))]
+    
+    if request.method == 'POST':
+        selected_checkpoint = request.form.get('checkpoint')
+        selected_architecture = request.form.get('architecture')
+        message = None
+        error = None
+        if selected_checkpoint and selected_architecture:
+            checkpoint_path = os.path.join(checkpoints_dir, selected_checkpoint)
+            try:
+                model.network_name = selected_architecture
+                model.load_model_from_checkpoint(checkpoint_path)
+                flash(f'Successfully loaded checkpoint: {selected_checkpoint} with architecture: {selected_architecture}', 'success')
+                message = 'Checkpoint loaded successfully.'
+            except Exception as e:
+                app.logger.error(f"Error loading checkpoint {selected_checkpoint} with architecture {selected_architecture}: {str(e)}")
+                flash(f'Failed to load checkpoint: {selected_checkpoint} with architecture: {selected_architecture}', 'danger')
+                error = 'Failed to load checkpoint.'
+        return render_template('admin/select_checkpoint.html', checkpoint_files=checkpoint_files, architectures=architectures, default_checkpoint=selected_checkpoint, default_architecture=selected_architecture, message=message if message else None, error=error if error else None)
+    
+    return render_template('admin/select_checkpoint.html', checkpoint_files=checkpoint_files, architectures=architectures, default_checkpoint=checkpoint_path, default_architecture='OwnV2')
+
+
+
 # Create database tables if they don't exist
 with app.app_context():
     db.create_all()
@@ -110,6 +139,7 @@ def register_patient():
                 last_name=form.last_name.data,
                 birth_date=form.birth_date.data
             )
+
             db.session.add(patient)
             db.session.commit()
             flash('Registration successful.', 'success')
@@ -319,12 +349,14 @@ def batch_upload():
 @app.route('/admin')
 @login_required
 def admin_profile():
+    print(model.network_name)
     if current_user.role != 'admin':
         flash('Access unauthorized!', 'danger')
         return redirect(url_for('index'))
     return render_template('admin/admin_profile.html')
 
-
+# admin users
+# region
 @app.route('/admin/users')
 @login_required
 def manage_users():
@@ -386,7 +418,10 @@ def delete_user(user_id):
     else:
         flash('User not found.', 'danger')
     return redirect(url_for('manage_users'))
+# endregion
 
+# admin doctors
+# region
 @app.route('/admin/register_doctor', methods=['GET', 'POST'])
 @login_required
 def register_doctor():
@@ -422,8 +457,10 @@ def register_doctor():
             app.logger.error(f"Error during registration: {str(e)}")
             flash('Registration failed. Please try again.', 'danger')
     return render_template('register_doctor.html', form=form)
+# endregion
 
-
+# admin errors
+# region
 @app.errorhandler(Exception)
 def handle_error(error):
     error_log = ErrorLog(message=str(error), timestamp=datetime.now(utc_plus_3))
@@ -443,23 +480,31 @@ def view_errors():
         return redirect(url_for('index'))
     errors = ErrorLog.query.order_by(ErrorLog.id.desc()).all()
     return render_template('admin/errors.html', errors=errors)
-
 # endregion
 
+# admin retrain
+# region
+def retrain_model(architecture, epochs, batch_size, learning_rate, beta_1, beta_2):
+    classifier = MRIImageClassifier(network_name=architecture)
+    result = classifier.train(
+        epochs=epochs, 
+        batch_size=batch_size, 
+        logging=True,
+        learning_rate=learning_rate,
+        beta_1=beta_1,
+        beta_2=beta_2,
+    )
+    
+    # for i in range(4):
+    #     time.sleep(2)
+    #     globals.progress += globals.progress+25
+    # result = {'accuracy': 0.7867187261581421, 'loss': 0.6209670305252075, 'training_time': 84.42889475822449}
 
-def retrain_model():
-    # classifier = MRIImageClassifier(network_name='test')
-    # result = classifier.train(epochs=3, batch_size=32, logging=True)
-    
-    for i in range(4):
-        time.sleep(2)
-        globals.progress += globals.progress+25
-    
-    result = {'accuracy': 0.7867187261581421, 'loss': 0.6209670305252075, 'training_time': 84.42889475822449}
+
     globals.training_result = result
     return result
 
-@app.route('/progress')
+@app.route('/progress', methods=['GET'])
 def progress_status():
     try:
         return jsonify(progress=globals.progress), 200
@@ -467,7 +512,7 @@ def progress_status():
         app.logger.error(f"Error fetching progress: {str(e)}")
         return jsonify({'error': 'Internal Server Error'}), 500
 
-@app.route('/retrain-results')
+@app.route('/retrain-results', methods=['GET'])
 def retrain_results():
     try:
         return jsonify(result=globals.training_result), 200
@@ -477,13 +522,23 @@ def retrain_results():
 
 @app.route('/admin/start-retrain', methods=['POST'])
 def start_retrain():
+    globals.progress = 0
+    globals.training_result = None
     try:
-        thread = Thread(target=retrain_model)
+        data = request.form
+        architecture = str(data['architecture'])
+        epochs = int(data['epochs'])
+        batch_size = int(data['batch_size'])
+        learning_rate = float(data['learning_rate'])
+        beta_1 = float(data['beta_1'])
+        beta_2 = float(data['beta_2'])
+        print(architecture)
+        thread = Thread(target=retrain_model, args=(architecture, epochs, batch_size, learning_rate, beta_1, beta_2))
         thread.start()
-        return jsonify({'message': 'Retraining started'}), 200
+        return jsonify({'message': 'Retraining started! Please wait'}), 200
     except Exception as e:
         app.logger.error(f"Error starting retraining: {str(e)}")
-        return jsonify({'error': 'Internal Server Error'}), 500
+        return jsonify({'message': 'Internal Server Error'}), 500
 
 @app.route('/admin/retrain', methods=['GET', 'POST'])
 @login_required
@@ -491,8 +546,7 @@ def retrain():
     if current_user.role != 'admin':
         flash('Access denied.', 'danger')
         return redirect(url_for('home'))
-    
-    globals.progress = 0
-    globals.training_result = None
-
-    return render_template('admin/retrain.html')
+    architectures = model.avaible_network_names
+    return render_template('admin/retrain.html', architectures=architectures)
+# endregion
+# endregion
