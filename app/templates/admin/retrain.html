@@ -52,7 +52,7 @@
 {% block scripts %}
     <script>
         document.getElementById('retrain-form').addEventListener('submit', function(event) {
-            const confirmation = confirm('Are you sure you want to restart the training?');
+            const confirmation = confirm('Are you sure you want to start the training?');
             event.preventDefault();
             if (!confirmation) {
                 return

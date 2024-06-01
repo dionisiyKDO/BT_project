@@ -239,6 +239,9 @@ def image(filename):
 @app.route('/delete_image', methods=['GET', 'POST'])
 @login_required
 def delete_image():
+    if current_user.role != 'doctor':
+        flash('Access denied.', 'danger')
+        return redirect(url_for('home'))
     image_id = request.args.get('id')
     mri_scan = MRIScan.query.filter_by(id=image_id).first()
     if not mri_scan:
@@ -271,6 +274,9 @@ def get_file(filename):
 @app.route('/upload', methods=['GET', 'POST'])
 @login_required
 def upload():
+    if current_user.role != 'doctor':
+        flash('Access denied.', 'danger')
+        return redirect(url_for('home'))
     form = UploadForm()
     if form.validate_on_submit():
         try:
@@ -298,6 +304,9 @@ def upload():
 @app.route('/batch_upload', methods=['GET', 'POST'])
 @login_required
 def batch_upload():
+    if current_user.role != 'doctor':
+        flash('Access denied.', 'danger')
+        return redirect(url_for('home'))
     form = BatchUploadForm()
     if form.validate_on_submit():
         uploaded_files = form.images.data
@@ -321,7 +330,6 @@ def batch_upload():
 @app.route('/admin')
 @login_required
 def admin_profile():
-    print(model.network_name)
     if current_user.role != 'admin':
         flash('Access unauthorized!', 'danger')
         return redirect(url_for('index'))
@@ -476,7 +484,11 @@ def retrain_model(architecture, epochs, batch_size, learning_rate, beta_1, beta_
     return result
 
 @app.route('/progress', methods=['GET'])
+@login_required
 def progress_status():
+    if current_user.role != 'admin':
+        flash('Access denied.', 'danger')
+        return redirect(url_for('home'))
     try:
         return jsonify(progress=globals.progress), 200
     except Exception as e:
@@ -484,7 +496,11 @@ def progress_status():
         return jsonify({'error': 'Internal Server Error'}), 500
 
 @app.route('/retrain-results', methods=['GET'])
+@login_required
 def retrain_results():
+    if current_user.role != 'admin':
+        flash('Access denied.', 'danger')
+        return redirect(url_for('home'))
     try:
         return jsonify(result=globals.training_result), 200
     except Exception as e:
@@ -492,7 +508,11 @@ def retrain_results():
         return jsonify({'error': 'Internal Server Error'}), 500
 
 @app.route('/admin/start-retrain', methods=['POST'])
+@login_required
 def start_retrain():
+    if current_user.role != 'admin':
+        flash('Access denied.', 'danger')
+        return redirect(url_for('home'))
     globals.progress = 0
     globals.training_result = None
     try:
@@ -522,7 +542,11 @@ def retrain():
 
 
 @app.route('/admin/select_checkpoint', methods=['GET', 'POST'])
+@login_required
 def select_checkpoint():
+    if current_user.role != 'admin':
+        flash('Access denied.', 'danger')
+        return redirect(url_for('home'))
     checkpoint_path = './checkpoints/OwnV2.epoch36-val_acc0.9922.hdf5'
     checkpoints_dir = './checkpoints'
     architectures = model.avaible_network_names

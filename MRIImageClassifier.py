@@ -107,15 +107,13 @@ class MRIImageClassifier:
         test_datagen =  ImageDataGenerator(rescale=1./255)
         train_datagen = ImageDataGenerator(rescale=1./255,
                                            rotation_range=10,
-                                           brightness_range=(0.85, 1.15),
-                                           width_shift_range=0.002,
-                                           height_shift_range=0.002,
-                                           shear_range=12.5,
-                                           zoom_range=0,
+                                           brightness_range=(0.9, 1.10),
+                                           width_shift_range=0.005,
+                                           height_shift_range=0.005,
+                                           shear_range=10,
                                            horizontal_flip=True,
-                                           vertical_flip=False,
-                                           fill_mode="nearest"
                                            )
+        
         self.test_generator  =  test_datagen.flow_from_directory(test_dir,
                                                                 target_size=self.img_size,
                                                                 batch_size=batch_size,
@@ -259,55 +257,20 @@ class MRIImageClassifier:
                 Dense(self.num_classes,activation='softmax')
             ])
         elif self.network_name == 'VGG16':
-            self.model = Sequential([
-                Conv2D(filters=64, kernel_size=3, activation='relu', padding='same', input_shape=self.img_shape),
-                Conv2D(filters=64, kernel_size=3, activation='relu', padding='same'),
-                MaxPooling2D(pool_size=2, padding='same'),
-                Conv2D(filters=128, kernel_size=3, activation='relu', padding='same'),
-                Conv2D(filters=128, kernel_size=3, activation='relu', padding='same'),
-                MaxPooling2D(pool_size=2, padding='same'),
-                Conv2D(filters=256, kernel_size=3, activation='relu', padding='same'),
-                Conv2D(filters=256, kernel_size=3, activation='relu', padding='same'),
-                Conv2D(filters=256, kernel_size=3, activation='relu', padding='same'),
-                MaxPooling2D(pool_size=2, padding='same'),
-                Conv2D(filters=512, kernel_size=3, activation='relu', padding='same'),
-                Conv2D(filters=512, kernel_size=3, activation='relu', padding='same'),
-                Conv2D(filters=512, kernel_size=3, activation='relu', padding='same'),
-                MaxPooling2D(pool_size=2, padding='same'),
-                Conv2D(filters=512, kernel_size=3, activation='relu', padding='same'),
-                Conv2D(filters=512, kernel_size=3, activation='relu', padding='same'),
-                Conv2D(filters=512, kernel_size=3, activation='relu', padding='same'),
-                MaxPooling2D(pool_size=2, padding='same'),
-                Flatten(),
-                Dense(4096, activation='relu'),
-                Dense(4096, activation='relu'),
-                Dense(self.num_classes, activation='sigmoid')
+            base_model = tf.keras.applications.VGG16(weights='imagenet', include_top=False, input_shape=self.img_shape)
+            base_model.trainable = False
+            self.model = tf.keras.Sequential([
+                base_model,
+                GlobalAveragePooling2D(),
+                Dense(self.num_classes, activation='softmax'),
             ])
         elif self.network_name == 'VGG19':
+            base_model = tf.keras.applications.VGG19(weights='imagenet', include_top=False, input_shape=self.img_shape)
+            base_model.trainable = False
             self.model = tf.keras.Sequential([
-                Conv2D(filters=64, kernel_size=3, activation='relu', padding='same', input_shape=self.img_shape),
-                Conv2D(filters=64, kernel_size=3, activation='relu', padding='same'),
-                MaxPooling2D(pool_size=2, padding='same'),
-                Conv2D(filters=128, kernel_size=3, activation='relu', padding='same'),
-                Conv2D(filters=128, kernel_size=3, activation='relu', padding='same'),
-                MaxPooling2D(pool_size=2, padding='same'),
-                Conv2D(filters=256, kernel_size=3, activation='relu', padding='same'),
-                Conv2D(filters=256, kernel_size=3, activation='relu', padding='same'),
-                MaxPooling2D(pool_size=2, padding='same'),
-                Conv2D(filters=512, kernel_size=3, activation='relu', padding='same'),
-                Conv2D(filters=512, kernel_size=3, activation='relu', padding='same'),
-                Conv2D(filters=512, kernel_size=3, activation='relu', padding='same'),
-                Conv2D(filters=512, kernel_size=3, activation='relu', padding='same'),
-                MaxPooling2D(pool_size=2, padding='same'),
-                Conv2D(filters=512, kernel_size=3, activation='relu', padding='same'),
-                Conv2D(filters=512, kernel_size=3, activation='relu', padding='same'),
-                Conv2D(filters=512, kernel_size=3, activation='relu', padding='same'),
-                Conv2D(filters=512, kernel_size=3, activation='relu', padding='same'),
-                MaxPooling2D(pool_size=2, padding='same'),
-                Flatten(),
-                Dense(4096, activation='relu'),
-                Dense(4096, activation='relu'),
-                Dense(self.num_classes, activation='sigmoid')
+                base_model,
+                GlobalAveragePooling2D(),
+                Dense(self.num_classes, activation='softmax'),
             ])
         elif self.network_name == 'AlexNet':
             self.model = tf.keras.Sequential([
@@ -339,7 +302,6 @@ class MRIImageClassifier:
             self.model = tf.keras.Sequential([
                 base_model,
                 GlobalAveragePooling2D(),
-                Dropout(0.5),
                 Dense(self.num_classes, activation='softmax'),
             ])
         elif self.network_name == 'EfficientNetV2':
@@ -348,7 +310,6 @@ class MRIImageClassifier:
             self.model = tf.keras.Sequential([
                 base_model,
                 GlobalAveragePooling2D(),
-                Dropout(0.5),
                 Dense(self.num_classes, activation='softmax'),
             ])
         elif self.network_name == 'ResNet50':
@@ -357,7 +318,6 @@ class MRIImageClassifier:
             self.model = tf.keras.Sequential([
                 base_model,
                 GlobalAveragePooling2D(),
-                Dropout(0.5),
                 Dense(self.num_classes, activation='softmax'),
             ])
         elif self.network_name == 'InceptionResNetV2':
@@ -366,31 +326,9 @@ class MRIImageClassifier:
             self.model = tf.keras.Sequential([
                 base_model,
                 GlobalAveragePooling2D(),
-                Dropout(0.5),
                 Dense(self.num_classes, activation='softmax'),
             ])
         
-        elif self.network_name == 'AlexNet_own':
-            self.model = tf.keras.Sequential([
-                Conv2D(filters=256, kernel_size=(12,12), strides=(5,5), activation='relu', input_shape=self.img_shape),
-                MaxPooling2D(pool_size=(3,3), strides=(2,2)),
-                BatchNormalization(),
-
-                Conv2D(filters=512, kernel_size=(6,6), strides=(2,2), activation='relu', padding="same"),
-                MaxPooling2D(pool_size=(3,3), strides=(2,2)),
-                BatchNormalization(),
-
-                Conv2D(filters=256, kernel_size=(3,3), strides=(1,1), activation='relu', padding="same"),
-                MaxPooling2D(pool_size=(3,3), strides=(2,2)),
-                BatchNormalization(),
-
-                Flatten(),
-                Dense(4096, activation='relu'),
-                Dropout(0.5),
-                Dense(4096, activation='relu'),
-                Dropout(0.5),
-                Dense(self.num_classes,activation='softmax')
-            ])
         elif self.network_name == 'OwnV1':
             self.model = tf.keras.Sequential([
                 Conv2D(filters=256, kernel_size=(12,12), strides=(5,5), activation='relu', input_shape=self.img_shape),
@@ -411,8 +349,6 @@ class MRIImageClassifier:
                 Dense(self.num_classes,activation='softmax')
             ])
         elif self.network_name == 'OwnV2':
-            # tried decreasing to 16-32-64-512 - too bad
-            # increased to 64-128-256-1028 - performce good (99.22)
             self.model = Sequential([
                 Conv2D(filters=64, kernel_size=(12,12), strides=(5,5), activation='relu', input_shape=self.img_shape),
                 MaxPooling2D(pool_size=(3,3), strides=(2,2)),
@@ -433,7 +369,3 @@ class MRIImageClassifier:
             ])
 
         else: self.model = None
-
-    def is_compatible_checkpoint(self, checkpoint_path: str):
-        """Check if the checkpoint file is compatible with the current architecture."""
-        return True
